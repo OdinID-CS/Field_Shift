@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import {
   AlertTriangle,
   BadgeCheck,
@@ -96,6 +97,7 @@ const YIELD_SIGNAL_OPTIONS = [
 ] as const;
 
 export default function PassportScreen() {
+  const router = useRouter();
   const theme = useTheme();
   const { session, signOut } = useAuth();
   const {
@@ -224,6 +226,16 @@ export default function PassportScreen() {
       <TopBarHeader
         title="Evidence Passports"
         subtitle={`${selectedCell.cellId} · ${roleLabel} · ${sourceLabel}`}
+        leftAction={{
+          id: 'back-tools',
+          icon: {
+            ios: 'chevron.left',
+            android: 'arrow_back',
+            web: 'arrow_back',
+          },
+          onPress: () => router.back(),
+          accessibilityLabel: 'Back to Tools',
+        }}
         rightActions={[
           {
             id: 'reset-tier',

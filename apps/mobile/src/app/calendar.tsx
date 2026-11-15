@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
@@ -187,6 +188,7 @@ function CollapsibleChartSection({
 }
 
 export default function CalendarScreen() {
+  const router = useRouter();
   const theme = useTheme();
   const { cells, selectedCell, selectCell } = usePilotState();
   const [filter, setFilter] = useState<CalendarFilter>('all');
@@ -265,14 +267,14 @@ export default function CalendarScreen() {
         title={selectedCell.zoneName.split(' ')[0]}
         subtitle={`${selectedCell.soilTexture} · ${selectedCell.cellId}`}
         leftAction={{
-          id: 'cycle-cell',
+          id: 'back-tools',
           icon: {
             ios: 'chevron.left',
             android: 'arrow_back',
             web: 'arrow_back',
           },
-          onPress: cycleCell,
-          accessibilityLabel: 'Switch pilot cell',
+          onPress: () => router.back(),
+          accessibilityLabel: 'Back to Tools',
         }}
         rightActions={[
           {

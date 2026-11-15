@@ -1,4 +1,4 @@
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,13 +14,13 @@ import { usePilotState } from '@/hooks/use-pilot-state';
 import { toast } from '@/lib/toast';
 import { useTheme } from '@/theme/useTheme';
 
-const VISIBLE_TABS = new Set(['index', 'calendar', 'compare', 'passport']);
+const VISIBLE_TABS = new Set(['index', 'chat', 'tools', 'profile']);
 
 const tabIcons: Record<string, PlannerIconName> = {
   index: 'home',
-  calendar: 'calendar',
-  compare: 'compare',
-  passport: 'passport',
+  chat: 'chat',
+  tools: 'pairs',
+  profile: 'profile',
 };
 
 type BottomTabBarProps = Parameters<
@@ -33,7 +33,6 @@ export function RoofiBottomTabBar({
   emitter,
   navigateToTab,
 }: BottomTabBarProps) {
-  const router = useRouter();
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const isDark = scheme === 'dark';
@@ -242,30 +241,6 @@ export function RoofiBottomTabBar({
         {visibleRoutes.map(renderTabItem)}
       </View>
 
-      {/* Detached Chat button beside Sync */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Open ScalarField AI Advisor Chat"
-        onPress={() => router.push('/chat')}
-        style={({ pressed }) => ({
-          width: 46,
-          height: 46,
-          borderRadius: 23,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: brandPalette.ultramarineBlue,
-          borderWidth: 2,
-          borderColor: isDark ? '#171717' : '#FFFFFF',
-          elevation: 8,
-          shadowColor: brandPalette.ultramarineBlue,
-          shadowOpacity: 0.3,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-          opacity: pressed ? 0.82 : 1,
-        })}>
-        <PlannerIcon name="chat" size={20} color="#FFFFFF" strokeWidth={2} />
-      </Pressable>
-
       {/* Detached right-side Sync extension tab with status fill & queue count badge */}
       <Pressable
         accessibilityRole="button"
@@ -339,16 +314,16 @@ export default function AppTabs() {
         options={{ title: 'Home', tabBarAccessibilityLabel: 'Home' }}
       />
       <Tabs.Screen
-        name="calendar"
-        options={{ title: 'Calendar', tabBarAccessibilityLabel: 'Calendar' }}
+        name="chat"
+        options={{ title: 'Chat', tabBarAccessibilityLabel: 'Chat' }}
       />
       <Tabs.Screen
-        name="compare"
-        options={{ title: 'Compare', tabBarAccessibilityLabel: 'Compare' }}
+        name="tools"
+        options={{ title: 'Tools', tabBarAccessibilityLabel: 'Tools' }}
       />
       <Tabs.Screen
-        name="passport"
-        options={{ title: 'Passport', tabBarAccessibilityLabel: 'Passport' }}
+        name="profile"
+        options={{ title: 'Profile', tabBarAccessibilityLabel: 'Profile' }}
       />
     </Tabs>
   );

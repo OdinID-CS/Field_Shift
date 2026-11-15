@@ -13,7 +13,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PlannerIcon } from '@/components/icons';
-import { brandPalette, roofiRadii, roofiTypography } from '@/constants/theme';
+import {
+  BottomTabInset,
+  brandPalette,
+  roofiRadii,
+  roofiTypography,
+} from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
 import { usePilotState } from '@/hooks/use-pilot-state';
 import {
   sendFarmerChatMessage,
@@ -111,6 +117,10 @@ export default function FarmerChatModal() {
     scrollToBottom();
   };
 
+  const { session } = useAuth();
+  const isOfficer =
+    session?.role === 'extension_officer' || session?.role === 'agronomist';
+
   const handleApplyToCompare = (card: ChatResultCard) => {
     selectCell(card.cellId);
     applyPreset(card.weights);
@@ -118,7 +128,7 @@ export default function FarmerChatModal() {
       'Applied to Compare',
       `${card.cellId} · ${card.topStrategyName}`,
     );
-    router.replace('/(tabs)/compare');
+    router.push('/compare');
   };
 
   return (
@@ -170,26 +180,12 @@ export default function FarmerChatModal() {
                 fontFamily: roofiTypography.fontFamily.body,
                 fontSize: 12,
               }}>
-              {selectedCell.cellId} · {farmAreaHa.toFixed(1)} ha · OpenRouter + MCDA
+              {isOfficer
+                ? `${selectedCell.cellId} · ${farmAreaHa.toFixed(1)} ha · OpenRouter + MCDA`
+                : `${selectedCell.zoneName} · ${farmAreaHa.toFixed(1)} ha`}
             </Text>
           </View>
         </View>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Close chat"
-          onPress={() => router.back()}
-          style={({ pressed }) => ({
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#EFEFEF',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: pressed ? 0.7 : 1,
-          })}>
-          <PlannerIcon name="close" size={18} color={colors.text} />
-        </Pressable>
       </View>
 
       {/* Quick Prompts */}
@@ -344,27 +340,33 @@ export default function FarmerChatModal() {
                       gap: 10,
                       paddingTop: 4,
                     }}>
-                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '500' }}>
-                      MCDA: {msg.resultCard.topBaseScore.toFixed(3)} (+
-                      {msg.resultCard.deltaVsBaseline.toFixed(3)})
-                    </Text>
+                    {isOfficer ? (
+                      <Text style={{ color: colors.text, fontSize: 12, fontWeight: '500' }}>
+                        MCDA: {msg.resultCard.topBaseScore.toFixed(3)} (+
+                        {msg.resultCard.deltaVsBaseline.toFixed(3)})
+                      </Text>
+                    ) : null}
                     <Text style={{ color: colors.text, fontSize: 12, fontWeight: '500' }}>
                       Urea saved: ~{msg.resultCard.ureaSavingsKgPerHa} kg/ha
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-                      Minimax regret: {msg.resultCard.lowestMaxRegret.toFixed(3)}
-                    </Text>
+                    {isOfficer ? (
+                      <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                        Minimax regret: {msg.resultCard.lowestMaxRegret.toFixed(3)}
+                      </Text>
+                    ) : null}
                   </View>
 
-                  <Text
-                    style={{
-                      color: colors.textMuted,
-                      fontFamily: roofiTypography.fontFamily.body,
-                      fontSize: 11,
-                      lineHeight: 16,
-                    }}>
-                    {msg.resultCard.scaleHonestySummary}
-                  </Text>
+                  {isOfficer ? (
+                    <Text
+                      style={{
+                        color: colors.textMuted,
+                        fontFamily: roofiTypography.fontFamily.body,
+                        fontSize: 11,
+                        lineHeight: 16,
+                      }}>
+                      {msg.resultCard.scaleHonestySummary}
+                    </Text>
+                  ) : null}
 
                   <Pressable
                     accessibilityRole="button"
@@ -425,7 +427,7 @@ export default function FarmerChatModal() {
         style={{
           paddingHorizontal: 14,
           paddingTop: 10,
-          paddingBottom: Math.max(insets.bottom, 12),
+          paddingBottom: Math.max(insets.bottom, 12) + BottomTabInset,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           backgroundColor: colors.surface,

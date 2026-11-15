@@ -1,4 +1,5 @@
 import Slider from '@react-native-community/slider';
+import { useRouter } from 'expo-router';
 import { Layers, ShieldCheck, Sprout } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -59,6 +60,7 @@ const VIEW_MODE_OPTIONS = [
 ] as const;
 
 export default function CompareScreen() {
+  const router = useRouter();
   const theme = useTheme();
   const {
     selectedCell,
@@ -220,6 +222,16 @@ export default function CompareScreen() {
       <TopBarHeader
         title={`Strategies (${strategies.length})`}
         subtitle={`${selectedCell.cellId} · ${sourceBadge} · ${activeScenario.shortLabel}`}
+        leftAction={{
+          id: 'back-tools',
+          icon: {
+            ios: 'chevron.left',
+            android: 'arrow_back',
+            web: 'arrow_back',
+          },
+          onPress: () => router.back(),
+          accessibilityLabel: 'Back to Tools',
+        }}
         rightActions={[
           {
             id: 'preset-filter',

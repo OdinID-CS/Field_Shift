@@ -3,10 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AshantiMapPreview } from '@/components/ashanti-map-preview';
 import {
-  type ChartPoint,
-  InteractiveAreaChartCard,
   KpiMetricCard,
   SmartInsightCard,
   TopSearchRegionHeader,
@@ -14,7 +11,6 @@ import {
 import { PlannerIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Heading, Label } from '@/components/ui';
-import { evaluateMobileScaleHonesty } from '@/constants/pilot-data';
 import {
   BottomTabInset,
   CardShadow,
@@ -79,57 +75,6 @@ const CELL_METRICS: Record<
   },
 };
 
-type HomeTimeframeId = 'maj' | 'min' | 'dry' | 'yr';
-
-const MOISTURE_SERIES: Record<HomeTimeframeId, ChartPoint[]> = {
-  maj: [
-    { xLabel: 'D07', value: 38, calloutTitle: 'Mar D07' },
-    { xLabel: 'D09', value: 49, calloutTitle: 'Mar D09' },
-    { xLabel: 'D11', value: 64, calloutTitle: 'Apr D11' },
-    { xLabel: 'D13', value: 78, calloutTitle: 'May D13' },
-    { xLabel: 'D16', value: 86, calloutTitle: 'Jun D16' },
-    { xLabel: 'D19', value: 70, calloutTitle: 'Jul D19' },
-    { xLabel: 'D21', value: 58, calloutTitle: 'Jul D21' },
-  ],
-  min: [
-    { xLabel: 'D25', value: 44, calloutTitle: 'Sep D25' },
-    { xLabel: 'D27', value: 62, calloutTitle: 'Sep D27' },
-    { xLabel: 'D29', value: 74, calloutTitle: 'Oct D29' },
-    { xLabel: 'D30', value: 79, calloutTitle: 'Oct D30' },
-    { xLabel: 'D32', value: 56, calloutTitle: 'Nov D32' },
-    { xLabel: 'D33', value: 42, calloutTitle: 'Nov D33' },
-  ],
-  dry: [
-    { xLabel: 'D34', value: 35, calloutTitle: 'Dec D34' },
-    { xLabel: 'D36', value: 27, calloutTitle: 'Dec D36' },
-    { xLabel: 'D02', value: 21, calloutTitle: 'Jan D02' },
-    { xLabel: 'D04', value: 19, calloutTitle: 'Feb D04' },
-    { xLabel: 'D05', value: 24, calloutTitle: 'Feb D05' },
-    { xLabel: 'D06', value: 30, calloutTitle: 'Feb D06' },
-  ],
-  yr: [
-    { xLabel: 'Jan', value: 24, calloutTitle: 'Jan D02' },
-    { xLabel: 'Feb', value: 26, calloutTitle: 'Feb D05' },
-    { xLabel: 'Mar', value: 45, calloutTitle: 'Mar D08' },
-    { xLabel: 'Apr', value: 62, calloutTitle: 'Apr D11' },
-    { xLabel: 'May', value: 78, calloutTitle: 'May D14' },
-    { xLabel: 'Jun', value: 86, calloutTitle: 'Jun D17' },
-    { xLabel: 'Jul', value: 66, calloutTitle: 'Jul D20' },
-    { xLabel: 'Aug', value: 42, calloutTitle: 'Aug D23' },
-    { xLabel: 'Sep', value: 64, calloutTitle: 'Sep D26' },
-    { xLabel: 'Oct', value: 74, calloutTitle: 'Oct D29' },
-    { xLabel: 'Nov', value: 48, calloutTitle: 'Nov D32' },
-    { xLabel: 'Dec', value: 29, calloutTitle: 'Dec D35' },
-  ],
-};
-
-const HOME_TIMEFRAMES = [
-  { id: 'maj', label: 'Maj' },
-  { id: 'min', label: 'Min' },
-  { id: 'dry', label: 'Dry' },
-  { id: 'yr', label: 'Yr' },
-];
-
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -137,11 +82,10 @@ export default function HomeScreen() {
     cells,
     selectedCell,
     selectCell,
-    farmAreaHa,
+    strategies,
   } = usePilotState();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [timeframeId, setTimeframeId] = useState<HomeTimeframeId>('maj');
 
   const handleSelectCell = (cellId: string) => {
     selectCell(cellId);
@@ -171,7 +115,7 @@ export default function HomeScreen() {
   };
 
   const kpis = CELL_METRICS[selectedCell.cellId] ?? CELL_METRICS.ASH_R05_C05;
-  const scaleAssessment = evaluateMobileScaleHonesty(farmAreaHa);
+  const topPlan = strategies.find((s) => !s.isBaseline) ?? strategies[0];
 
   return (
     <SafeAreaView
@@ -258,10 +202,12 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        <AshantiMapPreview
-          cells={cells}
-          selectedCellId={selectedCell.cellId}
-          onSelectCell={handleSelectCell}
+        <SmartInsightCard
+          icon={{ ios: 'leaf', android: 'eco', web: 'eco' }}
+          category="THIS WEEK ON YOUR FARM"
+          headline={kpis.insight}
+          footer={`${selectedCell.zoneName} · Major & Minor Rain Windows`}
+          tone="green"
         />
 
         <View style={styles.kpiGrid}>
@@ -278,13 +224,13 @@ export default function HomeScreen() {
             />
             <KpiMetricCard
               icon={{
-                ios: 'thermometer.medium',
-                android: 'thermostat',
-                web: 'thermostat',
+                ios: 'leaf',
+                android: 'eco',
+                web: 'eco',
               }}
-              value={kpis.airTempC}
-              unit="°C"
-              label="Air Temp"
+              value={kpis.canopyPct}
+              unit="%"
+              label="Ground Cover"
             />
           </View>
           <View style={styles.kpiRow}>
@@ -294,134 +240,84 @@ export default function HomeScreen() {
                 android: 'thermostat',
                 web: 'thermostat',
               }}
-              value={kpis.soilTempC}
+              value={kpis.airTempC}
               unit="°C"
-              label="Soil Temp"
-            />
-            <KpiMetricCard
-              icon={{
-                ios: 'leaf',
-                android: 'eco',
-                web: 'eco',
-              }}
-              value={kpis.canopyPct}
-              unit="%"
-              label="Canopy Cover"
+              label="Air Temp"
             />
           </View>
         </View>
 
-        <InteractiveAreaChartCard
-          title="Soil Moisture Trajectory"
-          points={MOISTURE_SERIES[timeframeId]}
-          unit="%"
-          colorTone="green"
-          timeframes={HOME_TIMEFRAMES}
-          activeTimeframeId={timeframeId}
-          onSelectTimeframe={(id) => setTimeframeId(id as HomeTimeframeId)}
-          yMin={0}
-          yMax={100}
-          yTickCount={4}
-        />
-
-        <View style={styles.sectionHeader}>
-          <Heading title="Smart Insights" />
+        {topPlan ? (
           <View
             style={[
-              styles.countBadge,
-              { backgroundColor: theme.surfaceSubtle },
-            ]}>
-            <ThemedText type="code" themeColor="secondary">
-              {selectedCell.cellId}
-            </ThemedText>
-          </View>
-        </View>
-
-        <SmartInsightCard
-          icon={{ ios: 'leaf', android: 'eco', web: 'eco' }}
-          category="SOIL & ROTATION STATUS"
-          headline={kpis.insight}
-          footer={`Baseline 2022–2025 · Slope ${selectedCell.slopePct}% · pH ${selectedCell.soilPh}`}
-          tone="green"
-        />
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open Scale Honesty Check screen"
-          onPress={() => router.push('/scale-honesty')}
-          style={({ pressed }) => [
-            styles.scaleLauncherCard,
-            CardShadow,
-            {
-              backgroundColor: theme.surface,
-              borderColor: theme.border,
-            },
-            pressed && styles.pressed,
-          ]}>
-          <View style={styles.scaleLauncherTop}>
-            <View
-              style={[
-                styles.scaleLauncherIconBox,
-                { backgroundColor: theme.personal.surface },
-              ]}>
-              <PlannerIcon name="shield" size={20} color={theme.primary} />
-            </View>
-
-            <View style={styles.flexOne}>
-              <Label>SCALE HONESTY CHECK</Label>
-              <ThemedText type="sectionTitle">
-                Your farm: {farmAreaHa.toFixed(1)} ha (
-                {(farmAreaHa / 100).toFixed(3)} km²)
-              </ThemedText>
-              <ThemedText type="small" themeColor="secondary">
-                Compare 30 m field pixels (HLS/iSDAsoil) against coarse 9 km
-                SMAP regional boxes.
-              </ThemedText>
-            </View>
-          </View>
-
-          <View style={styles.scaleLauncherPillsRow}>
-            <View
-              style={[
-                styles.scaleBadge,
-                { backgroundColor: theme.sage.surface },
-              ]}>
-              <ThemedText type="code" style={{ color: theme.sage.ink }}>
-                {
-                  scaleAssessment.filter((entry) => entry.resolvesFarm)
-                    .length
-                }{' '}
-                field-scale sensors
-              </ThemedText>
-            </View>
-            <View
-              style={[
-                styles.scaleBadge,
-                { backgroundColor: theme.gold.surface },
-              ]}>
-              <ThemedText type="code" style={{ color: theme.gold.ink }}>
-                9 km SMAP regional
-              </ThemedText>
-            </View>
-          </View>
-
-          <View
-            style={[
-              styles.scaleLauncherBtn,
+              styles.scaleLauncherCard,
+              CardShadow,
               {
-                backgroundColor: theme.foreground,
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
               },
             ]}>
-            <Text
-              style={[
-                styles.scaleLauncherBtnText,
-                { color: theme.background },
-              ]}>
-              Open Scale Honesty Check
-            </Text>
-            <PlannerIcon name="chevron" size={16} color={theme.background} />
+            <View style={styles.scaleLauncherTop}>
+              <View
+                style={[
+                  styles.scaleLauncherIconBox,
+                  { backgroundColor: theme.sage.surface },
+                ]}>
+                <PlannerIcon name="zap" size={20} color={theme.sage.ink} />
+              </View>
+              <View style={styles.flexOne}>
+                <Label>TOP SUGGESTED PLAN</Label>
+                <ThemedText type="sectionTitle">{topPlan.name}</ThemedText>
+                <ThemedText type="small" themeColor="secondary">
+                  {topPlan.sequence}
+                  {topPlan.expectedBenefits[0]
+                    ? ` · ${topPlan.expectedBenefits[0]}`
+                    : ''}
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={styles.kpiRow}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/(tabs)/chat')}
+                style={({ pressed }) => [
+                  styles.scaleLauncherBtn,
+                  {
+                    flex: 1,
+                    backgroundColor: theme.primary,
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}>
+                <Text style={[styles.scaleLauncherBtnText, { color: '#FFFFFF' }]}>
+                  Ask Chat
+                </Text>
+                <PlannerIcon name="chat" size={16} color="#FFFFFF" />
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/(tabs)/tools')}
+                style={({ pressed }) => [
+                  styles.scaleLauncherBtn,
+                  {
+                    flex: 1,
+                    backgroundColor: theme.foreground,
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}>
+                <Text
+                  style={[
+                    styles.scaleLauncherBtnText,
+                    { color: theme.background },
+                  ]}>
+                  Open Tools
+                </Text>
+                <PlannerIcon name="chevron" size={16} color={theme.background} />
+              </Pressable>
+            </View>
           </View>
-        </Pressable>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
