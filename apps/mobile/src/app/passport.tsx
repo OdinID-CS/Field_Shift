@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import {
   AlertTriangle,
   BadgeCheck,
@@ -96,6 +97,7 @@ const YIELD_SIGNAL_OPTIONS = [
 ] as const;
 
 export default function PassportScreen() {
+  const router = useRouter();
   const theme = useTheme();
   const { session, signOut } = useAuth();
   const {
@@ -130,10 +132,7 @@ export default function PassportScreen() {
       if (source === 'camera') {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          toast.warning(
-            'Camera permission needed',
-            'Allow camera access to scan plot cover offline.',
-          );
+          toast.warning('Camera permission needed');
           return;
         }
       }
@@ -182,15 +181,9 @@ export default function PassportScreen() {
     setScanUri(null);
     setScanPrediction(null);
     if (res.status === 'submitted') {
-      toast.success(
-        'Field observation submitted',
-        'Queued for extension-officer verification (does not auto-shift model).',
-      );
+      toast.success('Report submitted', 'Saved to field log.');
     } else {
-      toast.warning(
-        'Field observation saved offline',
-        `${res.queuedCount} report(s) waiting for connection.`,
-      );
+      toast.warning('Saved offline', 'Will sync when online.');
     }
   };
 
@@ -216,48 +209,66 @@ export default function PassportScreen() {
       : session?.role === 'agronomist'
         ? 'Agronomist'
         : 'Farmer';
+  const isOfficer =
+    session?.role === 'extension_officer' || session?.role === 'agronomist';
 
   return (
     <SafeAreaView
       edges={['top']}
       style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <TopBarHeader
-        title="Evidence Passports"
-        subtitle={`${selectedCell.cellId} · ${roleLabel} · ${sourceLabel}`}
-        rightActions={[
-          {
-            id: 'reset-tier',
-            icon: {
-              ios: 'shield.checkered',
-              android: 'verified_user',
-              web: 'verified_user',
-            },
-            onPress: () => setTierFilter('all'),
-            accessibilityLabel: 'Show all evidence tiers',
+        title={isOfficer ? 'Evidence Passports' : 'Scan My Plot'}
+        subtitle={`${selectedCell.zoneName} · ${roleLabel}`}
+        leftAction={{
+          id: 'back-tools',
+          icon: {
+            ios: 'chevron.left',
+            android: 'arrow_back',
+            web: 'arrow_back',
           },
-          {
-            id: 'sign-out',
-            icon: {
-              ios: 'rectangle.portrait.and.arrow.right',
-              android: 'logout',
-              web: 'logout',
-            },
-            onPress: () => void signOut(),
-            accessibilityLabel: 'Sign out and switch role',
-          },
-        ]}
+          onPress: () => router.back(),
+          accessibilityLabel: 'Back to Tools',
+        }}
+        rightActions={
+          isOfficer
+            ? [
+                {
+                  id: 'reset-tier',
+                  icon: {
+                    ios: 'shield.checkered',
+                    android: 'verified_user',
+                    web: 'verified_user',
+                  },
+                  onPress: () => setTierFilter('all'),
+                  accessibilityLabel: 'Show all evidence tiers',
+                },
+                {
+                  id: 'sign-out',
+                  icon: {
+                    ios: 'rectangle.portrait.and.arrow.right',
+                    android: 'logout',
+                    web: 'logout',
+                  },
+                  onPress: () => void signOut(),
+                  accessibilityLabel: 'Sign out and switch role',
+                },
+              ]
+            : undefined
+        }
       />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        <SegmentedPillBar
-          options={TIER_FILTER_OPTIONS}
-          selectedId={tierFilter}
-          onSelect={setTierFilter}
-        />
+        {isOfficer ? (
+          <>
+            <SegmentedPillBar
+              options={TIER_FILTER_OPTIONS}
+              selectedId={tierFilter}
+              onSelect={setTierFilter}
+            />
 
-        {visiblePassports.map((passport) => {
+            {visiblePassports.map((passport) => {
           const isHypothesis =
             passport.evidenceTier === 'unverified_hypothesis';
           const isDataDerived =
@@ -352,6 +363,8 @@ export default function PassportScreen() {
             </View>
           );
         })}
+          </>
+        ) : null}
 
         <View style={styles.glossaryHeader}>
           <Heading title="Plain-Language Glossary" />

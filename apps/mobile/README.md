@@ -1,56 +1,53 @@
-# Welcome to your Expo app 👋
+# ScalarField Mobile App (`apps/mobile`)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Expo SDK 58 (React Native `0.88.1` + Expo Router) field companion for farmers, extension officers, and agronomists in the **Ashanti Region, Ghana** 50 × 50 km pilot grid.
 
-## Get started
+Works offline-first with local district packs, deterministic TypeScript MCDA & Minimax Regret scoring (`1e-9` parity with Python), and optional cloud sync / AI Advisor chat.
 
-1. Install dependencies
+## Demo Credentials (`/login`)
 
-   ```bash
-   npm install
-   ```
+| Role | Phone Number | 4-Digit PIN | Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Farmer** (`farmer`) | `0512345601` | `1111` | Ashanti EO baselines, 36-dekad calendar, strategy comparison, camera plot scan, offline decision/outcome logging |
+| **Extension Officer** (`extension_officer`) | `0512345602` | `2222` | Farmer views + Officer Review grading (`officer_reviewed` / `confounded_excluded`) |
+| **Agronomist** (`agronomist`) | `0512345603` | `3333` | Senior validation (`expert_validated`) + M8 calibration oversight |
 
-2. Start the app
+## Screens & Navigation (`src/app/`)
 
-   ```bash
-   npx expo start
-   ```
+- **Home** (`(tabs)/index.tsx`):
+  - Interactive **Ashanti 5×5 km Grid Map** (`src/components/ashanti-map-preview.tsx` / `.web.tsx`) for switching between Ejura, Mampong, Offinso, and Sekyere Central cells.
+  - KPI metric cards (Soil Moisture, Air Temp, Soil Temp, Canopy Cover), **Soil Moisture Trajectory** chart, Smart Insights, and **Scale Honesty** launcher.
+- **Calendar** (`(tabs)/calendar.tsx`):
+  - Top segmented filter bar (`All Windows`, `Bare Risk`, `Cloud QA`, `Dekad Windows`).
+  - **36-Dekad Exposure Calendar** (`src/components/dekad-heatmap-matrix.tsx`) showing 10-day rainfall, NDVI, bare-field risk, and cloud QA windows.
+  - Animated collapsible bento grid cards for **Vegetation Cover & Moisture**, **Air & Surface Temperature**, and **Rainfall vs. ET₀ Demand**, plus a plain-language glossary.
+- **Compare** (`(tabs)/compare.tsx`):
+  - Priority weight controls, 4-strategy comparison (Baseline + Strategies A–C), climate stress-test sliders, and Monte Carlo rank stability / Minimax Regret rankings.
+- **Passport** (`(tabs)/passport.tsx`):
+  - Evidence Passport cards, camera plot canopy scan (`classifyRgbaPatch`), and offline decision/outcome logging synced via the bottom-right Sync button.
+- **ScalarField AI Advisor Chat** (`chat.tsx`):
+  - Launched from the floating center button in the custom bottom tab dock (`src/components/app-tabs.tsx`). Connects to the OpenRouter + deterministic MCDA pipeline chat endpoint (`/api/chat`) with quick prompts and one-tap **Apply to Compare Studio**.
+- **Scale Honesty** (`scale-honesty.tsx`):
+  - Interactive parcel-area stepper and **Scale Footprint Diagram** (`src/components/scale-footprint-diagram.tsx`) comparing farm size against SMAP (9 km), SRTM (30 m), and HLS (30 m) pixels.
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Local Development & Verification
 
 ```bash
-npm run reset-project
+# Install dependencies
+npm --prefix apps/mobile install
+
+# Start Expo dev server (iOS, Android, Web)
+npm --prefix apps/mobile start
+
+# Typecheck & run deterministic scoring / auth / RGBA tests
+cd apps/mobile && npx tsc --noEmit && npm test
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+## Building with EAS (`eas.json`)
 
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **Development client (internal):** `cd apps/mobile && eas build --platform ios --profile development`
+- **Preview (internal):** `cd apps/mobile && eas build --platform ios --profile preview`
+- **Production `.ipa` (store, no auto-submit):**
+  ```bash
+  cd apps/mobile && eas build --platform ios --profile production --non-interactive
+  ```

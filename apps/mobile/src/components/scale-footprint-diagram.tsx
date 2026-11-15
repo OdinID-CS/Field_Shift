@@ -231,9 +231,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   ratioBadgeText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   smapOuterBox: {
     borderRadius: roofiRadii.lg,
@@ -272,9 +272,9 @@ const styles = StyleSheet.create({
     borderRadius: roofiRadii.pill,
   },
   layerTitle: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '500',
     flexShrink: 1,
   },
   layerMetaPill: {
@@ -283,9 +283,9 @@ const styles = StyleSheet.create({
     borderRadius: roofiRadii.pill,
   },
   layerMetaText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   farmParcelTrack: {
     position: 'relative',
@@ -312,9 +312,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   farmParcelTitle: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   hlsCountChip: {
     paddingHorizontal: 8,
@@ -322,9 +322,9 @@ const styles = StyleSheet.create({
     borderRadius: roofiRadii.pill,
   },
   hlsCountText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   farmParcelSub: {
     fontFamily: roofiTypography.fontFamily.body,

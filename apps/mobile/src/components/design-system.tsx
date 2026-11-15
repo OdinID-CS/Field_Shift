@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   LayoutChangeEvent,
   Pressable,
@@ -29,12 +29,18 @@ export function TopSearchRegionHeader({
   searchPlaceholder = 'Search region or cell',
   regionCaption = 'Region',
   regionName,
+  showSearch = false,
+  badgeText = '5×5 KM EO',
+  rightAction,
 }: {
-  searchQuery: string;
-  onChangeSearch: (text: string) => void;
+  searchQuery?: string;
+  onChangeSearch?: (text: string) => void;
   searchPlaceholder?: string;
   regionCaption?: string;
   regionName: string;
+  showSearch?: boolean;
+  badgeText?: string;
+  rightAction?: ReactNode;
 }) {
   const theme = useTheme();
 
@@ -65,50 +71,56 @@ export function TopSearchRegionHeader({
           </Text>
         </View>
 
-        <View
-          style={[
-            styles.regionPillBadge,
-            {
-              backgroundColor: theme.personal.surface,
-              borderColor: theme.personal.edge,
-            },
-          ]}>
-          <PlannerIcon name="pin" size={14} color={theme.primary} />
-          <Text
+        {rightAction ? (
+          rightAction
+        ) : (
+          <View
             style={[
-              styles.regionPillText,
-              { color: theme.personal.ink },
+              styles.regionPillBadge,
+              {
+                backgroundColor: theme.personal.surface,
+                borderColor: theme.personal.edge,
+              },
             ]}>
-            5×5 KM EO
-          </Text>
-        </View>
+            <PlannerIcon name="pin" size={14} color={theme.primary} />
+            <Text
+              style={[
+                styles.regionPillText,
+                { color: theme.personal.ink },
+              ]}>
+              {badgeText}
+            </Text>
+          </View>
+        )}
       </View>
 
-      <View
-        style={[
-          styles.searchPill,
-          {
-            backgroundColor: theme.surfaceSubtle,
-            borderColor: theme.border,
-          },
-        ]}>
-        <PlannerIcon name="search" size={17} color={theme.secondary} />
-        <TextInput
-          value={searchQuery}
-          onChangeText={onChangeSearch}
-          placeholder={searchPlaceholder}
-          placeholderTextColor={theme.secondary}
-          selectionColor={theme.primary}
+      {showSearch && (
+        <View
           style={[
-            styles.searchInput,
+            styles.searchPill,
             {
-              color: theme.foreground,
-              fontFamily: roofiTypography.fontFamily.body,
+              backgroundColor: theme.surfaceSubtle,
+              borderColor: theme.border,
             },
-          ]}
-          clearButtonMode="while-editing"
-        />
-      </View>
+          ]}>
+          <PlannerIcon name="search" size={17} color={theme.secondary} />
+          <TextInput
+            value={searchQuery}
+            onChangeText={onChangeSearch}
+            placeholder={searchPlaceholder}
+            placeholderTextColor={theme.secondary}
+            selectionColor={theme.primary}
+            style={[
+              styles.searchInput,
+              {
+                color: theme.foreground,
+                fontFamily: roofiTypography.fontFamily.body,
+              },
+            ]}
+            clearButtonMode="while-editing"
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -288,7 +300,7 @@ export function SegmentedPillBar<T extends string>({
                 styles.segmentedText,
                 {
                   color: active ? theme.foreground : theme.secondary,
-                  fontFamily: roofiTypography.fontFamily.bodyBold,
+                  fontFamily: roofiTypography.fontFamily.body,
                 },
               ]}>
               {opt.label}
@@ -597,7 +609,7 @@ export function InteractiveAreaChartCard({
                       styles.timeframeText,
                       {
                         color: isActive ? theme.background : theme.secondary,
-                        fontFamily: roofiTypography.fontFamily.bodyBold,
+                        fontFamily: roofiTypography.fontFamily.body,
                       },
                     ]}>
                     {tf.label}
@@ -790,10 +802,7 @@ export function InteractiveAreaChartCard({
                     {
                       color:
                         idx === safeIdx ? theme.foreground : theme.mutedText,
-                      fontFamily:
-                        idx === safeIdx
-                          ? roofiTypography.fontFamily.bodyBold
-                          : roofiTypography.fontFamily.body,
+                      fontFamily: roofiTypography.fontFamily.body,
                     },
                   ]}>
                   {showLabel ? pt.xLabel : ''}
@@ -987,18 +996,18 @@ const styles = StyleSheet.create({
     gap: roofiSpacing[3],
   },
   plannerLabel: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: roofiTypography.fontSize.label,
     lineHeight: roofiTypography.lineHeight.label,
-    fontWeight: '700',
+    fontWeight: '500',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   plannerScreenTitle: {
-    fontFamily: roofiTypography.fontFamily.display,
+    fontFamily: roofiTypography.fontFamily.displayMedium,
     fontSize: roofiTypography.fontSize.screenTitle,
     lineHeight: roofiTypography.lineHeight.screenTitle,
-    fontWeight: '700',
+    fontWeight: '500',
     letterSpacing: -0.35,
     textTransform: 'uppercase',
   },
@@ -1012,9 +1021,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   regionPillText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '500',
     letterSpacing: 0.4,
   },
   topHeaderBar: {
@@ -1099,7 +1108,7 @@ const styles = StyleSheet.create({
   },
   segmentedText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   kpiCard: {
     flex: 1,
@@ -1146,9 +1155,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   heroUnit: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   statusPill: {
     paddingHorizontal: 10,
@@ -1192,7 +1201,7 @@ const styles = StyleSheet.create({
   },
   timeframeText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   statChipsRow: {
     flexDirection: 'row',
@@ -1376,10 +1385,10 @@ const styles = StyleSheet.create({
     borderRadius: Radii.xs,
   },
   aerialTagText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   gaugeWrapper: {
     gap: 6,
@@ -1415,10 +1424,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   gaugeMarkerText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
   gaugeLabelsRow: {

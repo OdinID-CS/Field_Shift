@@ -1,4 +1,4 @@
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,13 +14,13 @@ import { usePilotState } from '@/hooks/use-pilot-state';
 import { toast } from '@/lib/toast';
 import { useTheme } from '@/theme/useTheme';
 
-const VISIBLE_TABS = new Set(['index', 'calendar', 'compare', 'passport']);
+const VISIBLE_TABS = new Set(['index', 'chat', 'tools', 'profile']);
 
 const tabIcons: Record<string, PlannerIconName> = {
   index: 'home',
-  calendar: 'calendar',
-  compare: 'compare',
-  passport: 'passport',
+  chat: 'chat',
+  tools: 'pairs',
+  profile: 'profile',
 };
 
 type BottomTabBarProps = Parameters<
@@ -33,7 +33,6 @@ export function RoofiBottomTabBar({
   emitter,
   navigateToTab,
 }: BottomTabBarProps) {
-  const router = useRouter();
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const isDark = scheme === 'dark';
@@ -75,19 +74,13 @@ export function RoofiBottomTabBar({
     await refreshLivePilotData();
     if (!isConnected) {
       toast.warning(
-        'Offline mode',
-        `Showing ${sourceLabel}${queuedLogsCount > 0 ? ` · ${queuedLogsCount} queued` : ''}.`,
+        'Offline',
+        queuedLogsCount > 0 ? `${queuedLogsCount} saved on phone` : undefined,
       );
     } else if (queuedLogsCount > 0) {
-      toast.info(
-        `Syncing ${queuedLogsCount} queued item(s)`,
-        `${sourceLabel} · Flushing offline field queue to Supabase.`,
-      );
+      toast.info('Syncing', `Uploading ${queuedLogsCount} item(s)...`);
     } else {
-      toast.success(
-        `Synced · ${sourceLabel}`,
-        '30 m HLS, 30 m iSDAsoil, and field logs are up to date.',
-      );
+      toast.success('Synced', 'Data is up to date.');
     }
   };
 
@@ -98,9 +91,6 @@ export function RoofiBottomTabBar({
       | undefined;
     return options?.href !== null;
   });
-
-  const leftRoutes = visibleRoutes.slice(0, 2);
-  const rightRoutes = visibleRoutes.slice(2);
 
   const renderTabItem = (route: (typeof state.routes)[number]) => {
     const routeIndex = state.routes.findIndex((r) => r.key === route.key);
@@ -153,16 +143,16 @@ export function RoofiBottomTabBar({
           style={({ pressed }) => ({
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 7,
-            paddingHorizontal: 14,
-            paddingVertical: 9,
+            gap: 5,
+            paddingHorizontal: 10,
+            paddingVertical: 7,
             borderRadius: roofiRadii.pill,
             backgroundColor: roofiNavigation.activeSurface,
             opacity: pressed ? 0.8 : 1,
           })}>
           <PlannerIcon
             name={iconName}
-            size={21}
+            size={18}
             color={roofiNavigation.foreground}
             strokeWidth={2.1}
           />
@@ -170,8 +160,9 @@ export function RoofiBottomTabBar({
             numberOfLines={1}
             style={{
               color: roofiNavigation.foreground,
-              fontFamily: roofiTypography.fontFamily.bodyBold,
-              fontSize: 14,
+              fontFamily: roofiTypography.fontFamily.body,
+              fontSize: 13,
+              fontWeight: '600',
               letterSpacing: -0.2,
             }}>
             {label}
@@ -189,19 +180,31 @@ export function RoofiBottomTabBar({
         onPress={onPress}
         onLongPress={onLongPress}
         style={({ pressed }) => ({
+          flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 13,
-          paddingVertical: 9,
+          gap: 4,
+          paddingHorizontal: 8,
+          paddingVertical: 7,
           borderRadius: roofiRadii.pill,
-          opacity: pressed ? 0.5 : 1,
+          opacity: pressed ? 0.6 : 1,
         })}>
         <PlannerIcon
           name={iconName}
-          size={21}
+          size={17}
           color={roofiNavigation.inactive}
-          strokeWidth={1.7}
+          strokeWidth={1.8}
         />
+        <Text
+          numberOfLines={1}
+          style={{
+            color: roofiNavigation.inactive,
+            fontFamily: roofiTypography.fontFamily.body,
+            fontSize: 12.5,
+            fontWeight: '500',
+            letterSpacing: -0.2,
+          }}>
+          {label}
+        </Text>
       </Pressable>
     );
   };
@@ -217,60 +220,32 @@ export function RoofiBottomTabBar({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 10,
+        paddingHorizontal: 10,
+        gap: 6,
         paddingBottom: Math.max(insets.bottom, 12),
       }}>
-      {/* Primary 4-tab pill dock with half-floating center Chat FAB */}
-      <View style={{ position: 'relative', alignItems: 'center' }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: 10,
-            paddingVertical: 7,
-            borderRadius: 28,
-            backgroundColor: roofiNavigation.background,
-            borderWidth: 1,
-            borderColor: isDark
-              ? 'rgba(255,255,255,0.12)'
-              : 'rgba(23,23,23,0.08)',
-            elevation: 8,
-            shadowColor: '#171717',
-            shadowOpacity: isDark ? 0.4 : 0.16,
-            shadowRadius: 14,
-            shadowOffset: { width: 0, height: 4 },
-            gap: 4,
-          }}>
-          {leftRoutes.map(renderTabItem)}
-          <View style={{ width: 58 }} />
-          {rightRoutes.map(renderTabItem)}
-        </View>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open ScalarField AI Advisor Chat"
-          onPress={() => router.push('/chat')}
-          style={({ pressed }) => ({
-            position: 'absolute',
-            top: -22,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: brandPalette.ultramarineBlue,
-            borderWidth: 3,
-            borderColor: colors.background,
-            elevation: 10,
-            shadowColor: brandPalette.ultramarineBlue,
-            shadowOpacity: 0.35,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 4 },
-            opacity: pressed ? 0.85 : 1,
-          })}>
-          <PlannerIcon name="chat" size={24} color="#FFFFFF" strokeWidth={2} />
-        </Pressable>
+      {/* Primary 4-tab pill dock */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 7,
+          paddingVertical: 6,
+          borderRadius: 28,
+          backgroundColor: roofiNavigation.background,
+          borderWidth: 1,
+          borderColor: isDark
+            ? 'rgba(255,255,255,0.12)'
+            : 'rgba(23,23,23,0.08)',
+          elevation: 8,
+          shadowColor: '#171717',
+          shadowOpacity: isDark ? 0.4 : 0.16,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 4 },
+          gap: 2,
+        }}>
+        {visibleRoutes.map(renderTabItem)}
       </View>
 
       {/* Detached right-side Sync extension tab with status fill & queue count badge */}
@@ -280,9 +255,9 @@ export function RoofiBottomTabBar({
         onPress={() => void handleSyncPress()}
         style={({ pressed }) => ({
           position: 'relative',
-          width: 53,
-          height: 53,
-          borderRadius: 27,
+          width: 46,
+          height: 46,
+          borderRadius: 23,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: syncFillColor,
@@ -297,7 +272,7 @@ export function RoofiBottomTabBar({
         })}>
         <PlannerIcon
           name="repeat"
-          size={21}
+          size={20}
           color={syncIconColor}
           strokeWidth={2.1}
         />
@@ -306,10 +281,10 @@ export function RoofiBottomTabBar({
           <View
             style={{
               position: 'absolute',
-              top: -5,
-              right: -5,
-              minWidth: 22,
-              height: 22,
+              top: -4,
+              right: -4,
+              minWidth: 20,
+              height: 20,
               paddingHorizontal: 5,
               borderRadius: roofiRadii.pill,
               backgroundColor: brandPalette.chineseBlack,
@@ -321,9 +296,9 @@ export function RoofiBottomTabBar({
             <Text
               style={{
                 color: '#FFFFFF',
-                fontFamily: roofiTypography.fontFamily.bodyBold,
+                fontFamily: roofiTypography.fontFamily.body,
                 fontSize: 11,
-                fontWeight: '700',
+                fontWeight: '500',
               }}>
               {queuedLogsCount > 99 ? '99+' : queuedLogsCount}
             </Text>
@@ -346,16 +321,16 @@ export default function AppTabs() {
         options={{ title: 'Home', tabBarAccessibilityLabel: 'Home' }}
       />
       <Tabs.Screen
-        name="calendar"
-        options={{ title: 'Calendar', tabBarAccessibilityLabel: 'Calendar' }}
+        name="chat"
+        options={{ title: 'Chat', tabBarAccessibilityLabel: 'Chat' }}
       />
       <Tabs.Screen
-        name="compare"
-        options={{ title: 'Compare', tabBarAccessibilityLabel: 'Compare' }}
+        name="tools"
+        options={{ title: 'Tools', tabBarAccessibilityLabel: 'Tools' }}
       />
       <Tabs.Screen
-        name="passport"
-        options={{ title: 'Passport', tabBarAccessibilityLabel: 'Passport' }}
+        name="profile"
+        options={{ title: 'Profile', tabBarAccessibilityLabel: 'Profile' }}
       />
     </Tabs>
   );

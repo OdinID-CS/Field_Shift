@@ -30,17 +30,20 @@ function AuthenticatedShell() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
-          name="scale-honesty"
-          options={{
-            animation: 'slide_from_right',
-          }}
+          name="calendar"
+          options={{ animation: 'slide_from_right' }}
         />
         <Stack.Screen
-          name="chat"
-          options={{
-            presentation: 'fullScreenModal',
-            animation: 'slide_from_bottom',
-          }}
+          name="compare"
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="passport"
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="scale-honesty"
+          options={{ animation: 'slide_from_right' }}
         />
       </Stack>
       <Toaster position="top-center" theme="system" />

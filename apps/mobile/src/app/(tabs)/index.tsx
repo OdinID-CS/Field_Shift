@@ -3,10 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AshantiMapPreview } from '@/components/ashanti-map-preview';
 import {
-  type ChartPoint,
-  InteractiveAreaChartCard,
   KpiMetricCard,
   SmartInsightCard,
   TopSearchRegionHeader,
@@ -14,7 +11,6 @@ import {
 import { PlannerIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { Heading, Label } from '@/components/ui';
-import { evaluateMobileScaleHonesty } from '@/constants/pilot-data';
 import {
   BottomTabInset,
   CardShadow,
@@ -23,6 +19,7 @@ import {
   roofiSpacing,
   roofiTypography,
 } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
 import { usePilotState } from '@/hooks/use-pilot-state';
 import { useTheme } from '@/hooks/use-theme';
 import { toast } from '@/lib/toast';
@@ -79,191 +76,146 @@ const CELL_METRICS: Record<
   },
 };
 
-type HomeTimeframeId = 'maj' | 'min' | 'dry' | 'yr';
-
-const MOISTURE_SERIES: Record<HomeTimeframeId, ChartPoint[]> = {
-  maj: [
-    { xLabel: 'D07', value: 38, calloutTitle: 'Mar D07' },
-    { xLabel: 'D09', value: 49, calloutTitle: 'Mar D09' },
-    { xLabel: 'D11', value: 64, calloutTitle: 'Apr D11' },
-    { xLabel: 'D13', value: 78, calloutTitle: 'May D13' },
-    { xLabel: 'D16', value: 86, calloutTitle: 'Jun D16' },
-    { xLabel: 'D19', value: 70, calloutTitle: 'Jul D19' },
-    { xLabel: 'D21', value: 58, calloutTitle: 'Jul D21' },
-  ],
-  min: [
-    { xLabel: 'D25', value: 44, calloutTitle: 'Sep D25' },
-    { xLabel: 'D27', value: 62, calloutTitle: 'Sep D27' },
-    { xLabel: 'D29', value: 74, calloutTitle: 'Oct D29' },
-    { xLabel: 'D30', value: 79, calloutTitle: 'Oct D30' },
-    { xLabel: 'D32', value: 56, calloutTitle: 'Nov D32' },
-    { xLabel: 'D33', value: 42, calloutTitle: 'Nov D33' },
-  ],
-  dry: [
-    { xLabel: 'D34', value: 35, calloutTitle: 'Dec D34' },
-    { xLabel: 'D36', value: 27, calloutTitle: 'Dec D36' },
-    { xLabel: 'D02', value: 21, calloutTitle: 'Jan D02' },
-    { xLabel: 'D04', value: 19, calloutTitle: 'Feb D04' },
-    { xLabel: 'D05', value: 24, calloutTitle: 'Feb D05' },
-    { xLabel: 'D06', value: 30, calloutTitle: 'Feb D06' },
-  ],
-  yr: [
-    { xLabel: 'Jan', value: 24, calloutTitle: 'Jan D02' },
-    { xLabel: 'Feb', value: 26, calloutTitle: 'Feb D05' },
-    { xLabel: 'Mar', value: 45, calloutTitle: 'Mar D08' },
-    { xLabel: 'Apr', value: 62, calloutTitle: 'Apr D11' },
-    { xLabel: 'May', value: 78, calloutTitle: 'May D14' },
-    { xLabel: 'Jun', value: 86, calloutTitle: 'Jun D17' },
-    { xLabel: 'Jul', value: 66, calloutTitle: 'Jul D20' },
-    { xLabel: 'Aug', value: 42, calloutTitle: 'Aug D23' },
-    { xLabel: 'Sep', value: 64, calloutTitle: 'Sep D26' },
-    { xLabel: 'Oct', value: 74, calloutTitle: 'Oct D29' },
-    { xLabel: 'Nov', value: 48, calloutTitle: 'Nov D32' },
-    { xLabel: 'Dec', value: 29, calloutTitle: 'Dec D35' },
-  ],
-};
-
-const HOME_TIMEFRAMES = [
-  { id: 'maj', label: 'Maj' },
-  { id: 'min', label: 'Min' },
-  { id: 'dry', label: 'Dry' },
-  { id: 'yr', label: 'Yr' },
-];
-
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const { session } = useAuth();
+  const isOfficer =
+    session?.role === 'extension_officer' || session?.role === 'agronomist';
   const {
     cells,
     selectedCell,
     selectCell,
-    farmAreaHa,
+    strategies,
   } = usePilotState();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [timeframeId, setTimeframeId] = useState<HomeTimeframeId>('maj');
+  const [plotMenuOpen, setPlotMenuOpen] = useState(false);
 
   const handleSelectCell = (cellId: string) => {
     selectCell(cellId);
     const target = cells.find((c) => c.cellId === cellId);
     if (target) {
-      toast.info(
-        `Switched to ${target.cellId}`,
-        `${target.zoneName} · ${target.soilTexture} (pH ${target.soilPh})`,
-      );
-    }
-  };
-
-  const handleSearchChange = (text: string) => {
-    setSearchQuery(text);
-    const trimmed = text.trim().toLowerCase();
-    if (trimmed.length >= 2) {
-      const match = cells.find(
-        (c) =>
-          c.cellId.toLowerCase().includes(trimmed) ||
-          c.zoneName.toLowerCase().includes(trimmed) ||
-          c.soilTexture.toLowerCase().includes(trimmed),
-      );
-      if (match && match.cellId !== selectedCell.cellId) {
-        handleSelectCell(match.cellId);
-      }
+      toast.info(`Plot: ${target.zoneName.split(' ')[0]}`);
     }
   };
 
   const kpis = CELL_METRICS[selectedCell.cellId] ?? CELL_METRICS.ASH_R05_C05;
-  const scaleAssessment = evaluateMobileScaleHonesty(farmAreaHa);
+  const topPlan = strategies.find((s) => !s.isBaseline) ?? strategies[0];
 
   return (
     <SafeAreaView
       edges={['top']}
       style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <TopSearchRegionHeader
-        searchQuery={searchQuery}
-        onChangeSearch={handleSearchChange}
-        searchPlaceholder="Search soil, district, or cell"
         regionCaption="Ashanti Region"
         regionName="Ghana"
+        rightAction={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Select plot"
+            accessibilityState={{ expanded: plotMenuOpen }}
+            onPress={() => setPlotMenuOpen((prev) => !prev)}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 5,
+              paddingHorizontal: 11,
+              paddingVertical: 7,
+              borderRadius: roofiRadii.pill,
+              backgroundColor: theme.personal.surface,
+              borderWidth: 1,
+              borderColor: plotMenuOpen ? theme.primary : theme.personal.edge,
+              opacity: pressed ? 0.75 : 1,
+            })}>
+            <PlannerIcon name="pin" size={13} color={theme.primary} />
+            <Text
+              style={{
+                color: theme.personal.ink,
+                fontFamily: roofiTypography.fontFamily.body,
+                fontSize: 12.5,
+                fontWeight: '600',
+              }}>
+              {selectedCell.zoneName.split(' ')[0]}
+            </Text>
+            <PlannerIcon name="chevron" size={12} color={theme.personal.ink} />
+          </Pressable>
+        }
       />
+
+      {plotMenuOpen && (
+        <View
+          style={{
+            paddingHorizontal: roofiSpacing[5],
+            paddingVertical: 8,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.border,
+            backgroundColor: theme.surface,
+            gap: 4,
+          }}>
+          {cells.map((cell) => {
+            const selected = cell.cellId === selectedCell.cellId;
+            const shortName = cell.zoneName.split(' ')[0];
+            return (
+              <Pressable
+                key={cell.cellId}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                onPress={() => {
+                  handleSelectCell(cell.cellId);
+                  setPlotMenuOpen(false);
+                }}
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: 12,
+                  paddingVertical: 9,
+                  borderRadius: 10,
+                  backgroundColor: selected
+                    ? theme.surfaceSubtle
+                    : 'transparent',
+                  opacity: pressed ? 0.7 : 1,
+                })}>
+                <View style={{ flex: 1, gap: 1 }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: theme.foreground,
+                      fontFamily: selected
+                        ? roofiTypography.fontFamily.displayMedium
+                        : roofiTypography.fontFamily.body,
+                      fontSize: 13.5,
+                      fontWeight: selected ? '600' : '400',
+                    }}>
+                    {shortName} · {cell.zoneName}
+                  </Text>
+                  <Text
+                    style={{
+                      color: theme.secondary,
+                      fontFamily: roofiTypography.fontFamily.body,
+                      fontSize: 11,
+                    }}>
+                    {cell.soilTexture} · pH {cell.soilPh}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    color: selected ? theme.primary : theme.secondary,
+                    fontFamily: roofiTypography.fontFamily.body,
+                    fontSize: 12,
+                    fontWeight: selected ? '600' : '400',
+                  }}>
+                  {selected ? 'Active' : cell.cellId.replace('ASH_', '')}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        {/* Autis Planner Horizontal Workspace / Cell Switcher */}
-        <View style={styles.workspaceSwitcherWrap}>
-          <View style={styles.workspaceSwitcherHeader}>
-            <Label>PILOT WORKSPACE CELL</Label>
-            <Text
-              style={[
-                styles.workspaceRoleText,
-                { color: theme.secondary },
-              ]}>
-              {selectedCell.soilTexture} · pH {selectedCell.soilPh}
-            </Text>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.workspacePillsRow}>
-            {cells.map((cell) => {
-              const selected = cell.cellId === selectedCell.cellId;
-              const shortDistrict = cell.zoneName.split(' ')[0];
-              return (
-                <Pressable
-                  key={cell.cellId}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={cell.zoneName}
-                  onPress={() => handleSelectCell(cell.cellId)}
-                  style={[
-                    styles.workspacePill,
-                    {
-                      backgroundColor: selected
-                        ? theme.foreground
-                        : theme.surface,
-                      borderColor: selected ? theme.foreground : theme.border,
-                    },
-                  ]}>
-                  <View
-                    style={[
-                      styles.workspaceInitialBox,
-                      {
-                        backgroundColor: selected
-                          ? theme.surfaceSubtle
-                          : theme.personal.surface,
-                      },
-                    ]}>
-                    <Text
-                      style={[
-                        styles.workspaceInitialText,
-                        { color: theme.primary },
-                      ]}>
-                      {shortDistrict.slice(0, 1).toUpperCase()}
-                    </Text>
-                  </View>
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      styles.workspacePillLabel,
-                      {
-                        color: selected
-                          ? theme.background
-                          : theme.foreground,
-                      },
-                    ]}>
-                    {shortDistrict} · {cell.cellId.replace('ASH_', '')}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        <AshantiMapPreview
-          cells={cells}
-          selectedCellId={selectedCell.cellId}
-          onSelectCell={handleSelectCell}
-        />
-
         <View style={styles.kpiGrid}>
           <View style={styles.kpiRow}>
             <KpiMetricCard
@@ -278,13 +230,13 @@ export default function HomeScreen() {
             />
             <KpiMetricCard
               icon={{
-                ios: 'thermometer.medium',
-                android: 'thermostat',
-                web: 'thermostat',
+                ios: 'leaf',
+                android: 'eco',
+                web: 'eco',
               }}
-              value={kpis.airTempC}
-              unit="°C"
-              label="Air Temp"
+              value={kpis.canopyPct}
+              unit="%"
+              label="Ground Cover"
             />
           </View>
           <View style={styles.kpiRow}>
@@ -294,134 +246,97 @@ export default function HomeScreen() {
                 android: 'thermostat',
                 web: 'thermostat',
               }}
-              value={kpis.soilTempC}
+              value={kpis.airTempC}
               unit="°C"
-              label="Soil Temp"
+              label="Air Temp"
             />
             <KpiMetricCard
               icon={{
-                ios: 'leaf',
-                android: 'eco',
-                web: 'eco',
+                ios: 'cloud.rain',
+                android: 'water_drop',
+                web: 'water_drop',
               }}
-              value={kpis.canopyPct}
-              unit="%"
-              label="Canopy Cover"
+              value={`${selectedCell.typicalAnnualRainMm}`}
+              unit=" mm"
+              label="Typical Rain"
             />
           </View>
         </View>
 
-        <InteractiveAreaChartCard
-          title="Soil Moisture Trajectory"
-          points={MOISTURE_SERIES[timeframeId]}
-          unit="%"
-          colorTone="green"
-          timeframes={HOME_TIMEFRAMES}
-          activeTimeframeId={timeframeId}
-          onSelectTimeframe={(id) => setTimeframeId(id as HomeTimeframeId)}
-          yMin={0}
-          yMax={100}
-          yTickCount={4}
-        />
-
-        <View style={styles.sectionHeader}>
-          <Heading title="Smart Insights" />
+        {topPlan ? (
           <View
             style={[
-              styles.countBadge,
-              { backgroundColor: theme.surfaceSubtle },
-            ]}>
-            <ThemedText type="code" themeColor="secondary">
-              {selectedCell.cellId}
-            </ThemedText>
-          </View>
-        </View>
-
-        <SmartInsightCard
-          icon={{ ios: 'leaf', android: 'eco', web: 'eco' }}
-          category="SOIL & ROTATION STATUS"
-          headline={kpis.insight}
-          footer={`Baseline 2022–2025 · Slope ${selectedCell.slopePct}% · pH ${selectedCell.soilPh}`}
-          tone="green"
-        />
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open Scale Honesty Check screen"
-          onPress={() => router.push('/scale-honesty')}
-          style={({ pressed }) => [
-            styles.scaleLauncherCard,
-            CardShadow,
-            {
-              backgroundColor: theme.surface,
-              borderColor: theme.border,
-            },
-            pressed && styles.pressed,
-          ]}>
-          <View style={styles.scaleLauncherTop}>
-            <View
-              style={[
-                styles.scaleLauncherIconBox,
-                { backgroundColor: theme.personal.surface },
-              ]}>
-              <PlannerIcon name="shield" size={20} color={theme.primary} />
-            </View>
-
-            <View style={styles.flexOne}>
-              <Label>SCALE HONESTY CHECK</Label>
-              <ThemedText type="sectionTitle">
-                Your farm: {farmAreaHa.toFixed(1)} ha (
-                {(farmAreaHa / 100).toFixed(3)} km²)
-              </ThemedText>
-              <ThemedText type="small" themeColor="secondary">
-                Compare 30 m field pixels (HLS/iSDAsoil) against coarse 9 km
-                SMAP regional boxes.
-              </ThemedText>
-            </View>
-          </View>
-
-          <View style={styles.scaleLauncherPillsRow}>
-            <View
-              style={[
-                styles.scaleBadge,
-                { backgroundColor: theme.sage.surface },
-              ]}>
-              <ThemedText type="code" style={{ color: theme.sage.ink }}>
-                {
-                  scaleAssessment.filter((entry) => entry.resolvesFarm)
-                    .length
-                }{' '}
-                field-scale sensors
-              </ThemedText>
-            </View>
-            <View
-              style={[
-                styles.scaleBadge,
-                { backgroundColor: theme.gold.surface },
-              ]}>
-              <ThemedText type="code" style={{ color: theme.gold.ink }}>
-                9 km SMAP regional
-              </ThemedText>
-            </View>
-          </View>
-
-          <View
-            style={[
-              styles.scaleLauncherBtn,
+              styles.scaleLauncherCard,
+              CardShadow,
               {
-                backgroundColor: theme.foreground,
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
               },
             ]}>
-            <Text
-              style={[
-                styles.scaleLauncherBtnText,
-                { color: theme.background },
-              ]}>
-              Open Scale Honesty Check
-            </Text>
-            <PlannerIcon name="chevron" size={16} color={theme.background} />
+            <View style={styles.scaleLauncherTop}>
+              <View
+                style={[
+                  styles.scaleLauncherIconBox,
+                  { backgroundColor: theme.sage.surface },
+                ]}>
+                <PlannerIcon name="zap" size={20} color={theme.sage.ink} />
+              </View>
+              <View style={styles.flexOne}>
+                <Label>TOP SUGGESTED PLAN</Label>
+                <ThemedText type="sectionTitle">{topPlan.name}</ThemedText>
+                <ThemedText type="small" themeColor="secondary">
+                  {topPlan.sequence}
+                  {topPlan.expectedBenefits[0]
+                    ? ` · ${topPlan.expectedBenefits[0].replace(
+                        /Biological nitrogen fixation \(~30-60 kg N\/ha\) lowers urea dependence/i,
+                        'Natural nitrogen saves ~1–2 urea bags/ha',
+                      )}`
+                    : ''}
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={styles.kpiRow}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/(tabs)/chat')}
+                style={({ pressed }) => [
+                  styles.scaleLauncherBtn,
+                  {
+                    flex: 1,
+                    backgroundColor: theme.primary,
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}>
+                <Text style={[styles.scaleLauncherBtnText, { color: '#FFFFFF' }]}>
+                  Ask Chat
+                </Text>
+                <PlannerIcon name="chat" size={16} color="#FFFFFF" />
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/(tabs)/tools')}
+                style={({ pressed }) => [
+                  styles.scaleLauncherBtn,
+                  {
+                    flex: 1,
+                    backgroundColor: theme.foreground,
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}>
+                <Text
+                  style={[
+                    styles.scaleLauncherBtnText,
+                    { color: theme.background },
+                  ]}>
+                  Open Tools
+                </Text>
+                <PlannerIcon name="chevron" size={16} color={theme.background} />
+              </Pressable>
+            </View>
           </View>
-        </Pressable>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -471,15 +386,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   workspaceInitialText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   workspacePillLabel: {
     flexShrink: 1,
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   kpiGrid: {
     gap: 12,
@@ -537,9 +452,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   scaleLauncherBtnText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   pressed: { opacity: 0.75 },
 });

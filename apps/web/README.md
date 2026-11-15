@@ -9,6 +9,7 @@ Installable Next.js (App Router, TypeScript, Tailwind CSS) web application for f
   - Cross-language parity unit tests in `src/lib/scoring.test.ts` validating `1e-9` agreement against `../../shared/test-vectors/scoring_basic.json`.
   - Strategy comparison cards for a baseline and Strategies A–C, including weighted criteria scores, Monte Carlo rank probabilities, benefits, gaps, and risks.
   - Evidence Passport dialogs and interactive inline glossary explanations.
+  - `/api/chat` route handler (`src/app/api/chat/route.ts`) combining OpenRouter natural-language synthesis with deterministic MCDA pipeline scoring for the mobile AI Advisor Chat modal.
   - Supabase reads aligned with `supabase/migrations/20261114000000_phase1_schema.sql`; without configured/available Supabase, the decision UI uses clearly labelled illustrative fixtures. Map tiles remain illustrative placeholders.
 - **Planned feature set (below):** Core hackathon screens and stretch capabilities compiled from `README.md`, `dev-docs/Field Shift ML Workflow.md`, and `dev-docs/Field_Shift_Team_Stack_Plan.xlsx`.
 

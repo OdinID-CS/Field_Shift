@@ -52,9 +52,22 @@ export function AshantiMapPreview({
             ]}>
             <PlannerIcon name="pin" size={14} color={theme.primary} />
           </View>
-          <ThemedText type="sectionTitle">Ashanti 5×5 km Grid Map</ThemedText>
+          <ThemedText
+            type="sectionTitle"
+            style={{
+              fontFamily: roofiTypography.fontFamily.body,
+              fontWeight: '500',
+            }}>
+            Ashanti 5×5 km Grid Map
+          </ThemedText>
         </View>
-        <ThemedText type="code" themeColor="mutedText">
+        <ThemedText
+          type="small"
+          themeColor="mutedText"
+          style={{
+            fontFamily: roofiTypography.fontFamily.body,
+            fontWeight: '400',
+          }}>
           {activeCell.centreLat.toFixed(3)}°N,{' '}
           {Math.abs(activeCell.centreLon).toFixed(3)}°W
         </ThemedText>
@@ -127,8 +140,8 @@ export function AshantiMapPreview({
                 x={cx}
                 y={cy + 3}
                 fontSize={10}
-                fontFamily={roofiTypography.fontFamily.bodyBold}
-                fontWeight="700"
+                fontFamily={roofiTypography.fontFamily.body}
+                fontWeight="500"
                 textAnchor="middle"
                 fill={isSelected ? theme.personal.ink : theme.foreground}>
                 {cell.cellId.replace('ASH_', '')}
@@ -156,8 +169,10 @@ export function AshantiMapPreview({
                   },
                 ]}>
                 <ThemedText
-                  type="code"
+                  type="small"
                   style={{
+                    fontFamily: roofiTypography.fontFamily.body,
+                    fontWeight: '500',
                     color: isSelected ? theme.background : theme.secondary,
                   }}>
                   {cell.cellId}
