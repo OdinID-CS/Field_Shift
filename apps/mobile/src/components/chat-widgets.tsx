@@ -321,14 +321,17 @@ function ChatCompareWidget({
                 }}>
                 <Text
                   style={{
-                    color: colors.text,
+                    color:
+                      row.ureaKgSavedPerHa > 0
+                        ? brandPalette.ultramarineBlue
+                        : colors.textMuted,
                     fontFamily: roofiTypography.fontFamily.body,
                     fontSize: 11.5,
+                    fontWeight: row.ureaKgSavedPerHa > 0 ? '600' : '400',
                   }}>
                   {row.ureaKgSavedPerHa > 0
                     ? `Saves ~${row.ureaKgSavedPerHa} kg/ha urea`
                     : 'Standard fertilizer'}
-                  {isOfficer ? ` · MCDA ${row.baseScore.toFixed(2)}` : ''}
                 </Text>
 
                 <Pressable

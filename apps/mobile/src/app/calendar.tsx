@@ -452,7 +452,7 @@ export default function CalendarScreen() {
                   { backgroundColor: theme.surfaceSubtle },
                 ]}>
                 <ThemedText type="code" themeColor="secondary">
-                  {filteredWindows.length} · NDVI &lt; 0.28 BARE
+                  {filteredWindows.length} · {isOfficer ? 'NDVI < 0.28 BARE' : 'Bare Soil Risk'}
                 </ThemedText>
               </View>
             </View>
@@ -524,8 +524,15 @@ export default function CalendarScreen() {
                   { backgroundColor: theme.surfaceSubtle },
                 ]}>
                 <ThemedText type="code" themeColor="secondary">
-                  SMAP z={win.smapAnomalyZ >= 0 ? '+' : ''}
-                  {win.smapAnomalyZ.toFixed(2)}
+                  {isOfficer
+                    ? `SMAP z=${win.smapAnomalyZ >= 0 ? '+' : ''}${win.smapAnomalyZ.toFixed(2)}`
+                    : win.smapAnomalyZ < -0.8
+                      ? 'Soil: Very Dry'
+                      : win.smapAnomalyZ < 0
+                        ? 'Soil: Dry'
+                        : win.smapAnomalyZ > 0.6
+                          ? 'Soil: Wet'
+                          : 'Soil: Moist'}
                 </ThemedText>
               </View>
               <View
@@ -534,7 +541,9 @@ export default function CalendarScreen() {
                   { backgroundColor: theme.sage.surface },
                 ]}>
                 <ThemedText type="code" style={{ color: theme.sage.ink }}>
-                  NDVI {win.ndviSmooth.toFixed(2)}
+                  {isOfficer
+                    ? `NDVI ${win.ndviSmooth.toFixed(2)}`
+                    : `Cover ${Math.round(win.ndviSmooth * 100)}%`}
                 </ThemedText>
               </View>
             </View>

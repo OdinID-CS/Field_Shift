@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
   ActivityIndicator,
@@ -48,6 +49,9 @@ interface ChatBubble {
   widget?: ChatWidget | null;
 }
 
+const CHAT_HISTORY_STORAGE_KEY = 'fieldshift_plot_chat_history_v1';
+const PLOT_PICKED_STORAGE_KEY = 'fieldshift_chat_plot_picked_v1';
+
 const QUICK_PROMPTS = [
   'Best rotation for my cell',
   'Compare options',
@@ -57,12 +61,41 @@ const QUICK_PROMPTS = [
   'Explain in Twi',
 ];
 
+function buildWelcomeMessage(
+  cellId: string,
+  zoneName: string,
+  farmAreaHa: number,
+  askPlotFirst: boolean,
+): ChatBubble {
+  if (askPlotFirst) {
+    return {
+      id: `welcome-${cellId}`,
+      role: 'assistant',
+      content:
+        'Akwaaba! Which plot are you working on today? Pick your plot and farm size below.',
+      modelUsed: 'ScalarField Advisor',
+      widget: {
+        type: 'zone_picker',
+        currentCellId: cellId,
+        currentAreaHa: farmAreaHa,
+      },
+    };
+  }
+  return {
+    id: `welcome-${cellId}`,
+    role: 'assistant',
+    content: `Akwaaba! This is your chat for ${zoneName}. Ask a question or tap an option below.`,
+    modelUsed: 'ScalarField Advisor',
+  };
+}
+
 export default function FarmerChatModal() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const {
+    cells,
     selectedCell,
     weights,
     farmAreaHa,
@@ -76,6 +109,9 @@ export default function FarmerChatModal() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [hasPickedPlot, setHasPickedPlot] = useState(false);
+  const [plotMenuOpen, setPlotMenuOpen] = useState(false);
+  const [historyByPlot, setHistoryByPlot] = useState<Record<string, ChatBubble[]>>({});
   const [expandedThinkingIds, setExpandedThinkingIds] = useState<
     Record<string, boolean>
   >({});
@@ -83,14 +119,49 @@ export default function FarmerChatModal() {
   const toggleThinking = (id: string) => {
     setExpandedThinkingIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-  const [messages, setMessages] = useState<ChatBubble[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: `Akwaaba! Ask me about ${selectedCell.zoneName}, or tap an option below to compare crops, check planting dates, or switch your zone.`,
-      modelUsed: 'ScalarField Advisor',
-    },
-  ]);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const [rawHistory, rawPicked] = await Promise.all([
+          AsyncStorage.getItem(CHAT_HISTORY_STORAGE_KEY),
+          AsyncStorage.getItem(PLOT_PICKED_STORAGE_KEY),
+        ]);
+        if (!active) return;
+        if (rawPicked === 'true') {
+          setHasPickedPlot(true);
+        }
+        if (rawHistory) {
+          const parsed = JSON.parse(rawHistory) as Record<string, ChatBubble[]>;
+          if (parsed && typeof parsed === 'object') {
+            setHistoryByPlot(parsed);
+          }
+        }
+      } catch {
+        // Ignore storage errors and start fresh
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const persistHistory = (next: Record<string, ChatBubble[]>) => {
+    void AsyncStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(next)).catch(
+      () => undefined,
+    );
+  };
+
+  const activePlotId = selectedCell.cellId;
+  const messages = historyByPlot[activePlotId] ?? [
+    buildWelcomeMessage(
+      activePlotId,
+      selectedCell.zoneName,
+      farmAreaHa,
+      !hasPickedPlot,
+    ),
+  ];
 
   useEffect(() => {
     const showEvent =
@@ -111,15 +182,69 @@ export default function FarmerChatModal() {
     }, 60);
   };
 
-  const appendAssistantBubble = (bubble: Omit<ChatBubble, 'id' | 'role'>) => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `a-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        role: 'assistant',
-        ...bubble,
-      },
-    ]);
+  const appendBubbleToPlot = (plotId: string, bubble: ChatBubble) => {
+    const plotCell = cells.find((c) => c.cellId === plotId) ?? selectedCell;
+    setHistoryByPlot((prev) => {
+      const existing = prev[plotId] ?? [
+        buildWelcomeMessage(
+          plotId,
+          plotCell.zoneName,
+          farmAreaHa,
+          false,
+        ),
+      ];
+      const next = {
+        ...prev,
+        [plotId]: [...existing, bubble],
+      };
+      persistHistory(next);
+      return next;
+    });
+    scrollToBottom();
+  };
+
+  const appendAssistantBubble = (
+    bubble: Omit<ChatBubble, 'id' | 'role'>,
+    plotId: string = activePlotId,
+  ) => {
+    appendBubbleToPlot(plotId, {
+      id: `a-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      role: 'assistant',
+      ...bubble,
+    });
+  };
+
+  const markPlotPicked = () => {
+    if (!hasPickedPlot) {
+      setHasPickedPlot(true);
+      void AsyncStorage.setItem(PLOT_PICKED_STORAGE_KEY, 'true').catch(
+        () => undefined,
+      );
+    }
+  };
+
+  const handleSwitchPlot = (cellId: string) => {
+    markPlotPicked();
+    selectCell(cellId);
+    const targetCell = cells.find((c) => c.cellId === cellId);
+    if (targetCell) {
+      setHistoryByPlot((prev) => {
+        if (prev[cellId]?.length) return prev;
+        const next = {
+          ...prev,
+          [cellId]: [
+            buildWelcomeMessage(
+              cellId,
+              targetCell.zoneName,
+              farmAreaHa,
+              false,
+            ),
+          ],
+        };
+        persistHistory(next);
+        return next;
+      });
+    }
     scrollToBottom();
   };
 
@@ -127,31 +252,36 @@ export default function FarmerChatModal() {
     const text = (rawText ?? input).trim();
     if (!text || sending) return;
 
+    const targetPlotId = activePlotId;
+    markPlotPicked();
+
     const userMsg: ChatBubble = {
       id: `u-${Date.now()}`,
       role: 'user',
       content: text,
     };
     const history: ChatHistoryTurn[] = messages
-      .filter((m) => m.id !== 'welcome')
+      .filter((m) => !m.id.startsWith('welcome'))
       .map((m) => ({ role: m.role, content: m.content }));
 
-    setMessages((prev) => [...prev, userMsg]);
+    appendBubbleToPlot(targetPlotId, userMsg);
     if (!rawText) setInput('');
-    scrollToBottom();
 
     const localCmd = resolveLocalChatCommand({
       message: text,
-      cellId: selectedCell.cellId,
+      cellId: targetPlotId,
       weights,
       farmAreaHa,
       strategies,
     });
     if (localCmd) {
-      appendAssistantBubble({
-        content: localCmd.reply,
-        widget: localCmd.widget,
-      });
+      appendAssistantBubble(
+        {
+          content: localCmd.reply,
+          widget: localCmd.widget,
+        },
+        targetPlotId,
+      );
       return;
     }
 
@@ -159,17 +289,20 @@ export default function FarmerChatModal() {
     const response = await sendFarmerChatMessage({
       message: text,
       history,
-      cellId: selectedCell.cellId,
+      cellId: targetPlotId,
       weights,
       farmAreaHa,
     });
 
-    appendAssistantBubble({
-      content: response.reply,
-      modelUsed: response.modelUsed,
-      pipelineSource: response.pipelineSource,
-      resultCard: response.resultCard,
-    });
+    appendAssistantBubble(
+      {
+        content: response.reply,
+        modelUsed: response.modelUsed,
+        pipelineSource: response.pipelineSource,
+        resultCard: response.resultCard,
+      },
+      targetPlotId,
+    );
     setSending(false);
   };
 
@@ -327,12 +460,117 @@ export default function FarmerChatModal() {
                 fontSize: 12,
               }}>
               {isOfficer
-                ? `${selectedCell.cellId} · ${farmAreaHa.toFixed(1)} ha · OpenRouter + MCDA`
-                : `${selectedCell.zoneName} · ${farmAreaHa.toFixed(1)} ha`}
+                ? `${selectedCell.cellId} · ${farmAreaHa.toFixed(1)} ha`
+                : `${selectedCell.zoneName.split(' ')[0]} · ${farmAreaHa.toFixed(1)} ha`}
             </Text>
           </View>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Switch plot"
+          accessibilityState={{ expanded: plotMenuOpen }}
+          onPress={() => setPlotMenuOpen((prev) => !prev)}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 5,
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: roofiRadii.pill,
+            backgroundColor: colors.background,
+            borderWidth: 1,
+            borderColor: plotMenuOpen
+              ? brandPalette.ultramarineBlue
+              : colors.border,
+            opacity: pressed ? 0.75 : 1,
+          })}>
+          <Text
+            style={{
+              color: colors.text,
+              fontFamily: roofiTypography.fontFamily.body,
+              fontSize: 12,
+            }}>
+            {selectedCell.zoneName.split(' ')[0]}
+          </Text>
+          <PlannerIcon name="chevron" size={12} color={colors.textMuted} />
+        </Pressable>
       </View>
+
+      {plotMenuOpen && (
+        <View
+          style={{
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            backgroundColor: colors.surface,
+            gap: 4,
+          }}>
+          {cells.map((cell) => {
+            const active = cell.cellId === selectedCell.cellId;
+            const plotMsgCount = (historyByPlot[cell.cellId] ?? []).filter(
+              (m) => !m.id.startsWith('welcome'),
+            ).length;
+            return (
+              <Pressable
+                key={cell.cellId}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                onPress={() => {
+                  handleSwitchPlot(cell.cellId);
+                  setPlotMenuOpen(false);
+                }}
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: 10,
+                  paddingVertical: 8,
+                  borderRadius: 10,
+                  backgroundColor: active
+                    ? colors.background
+                    : 'transparent',
+                  opacity: pressed ? 0.7 : 1,
+                })}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                  <View
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: 3.5,
+                      backgroundColor: active
+                        ? brandPalette.ultramarineBlue
+                        : plotMsgCount > 0
+                          ? '#4ADE80'
+                          : colors.border,
+                    }}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: colors.text,
+                      fontFamily: active
+                        ? roofiTypography.fontFamily.displayMedium
+                        : roofiTypography.fontFamily.body,
+                      fontSize: 13,
+                    }}>
+                    {cell.zoneName}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    color: active ? brandPalette.ultramarineBlue : colors.textMuted,
+                    fontFamily: roofiTypography.fontFamily.body,
+                    fontSize: 11.5,
+                  }}>
+                  {active ? 'Active' : cell.cellId.replace('ASH_', '')}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
 
       {/* Quick Prompts */}
       <View
@@ -523,13 +761,12 @@ export default function FarmerChatModal() {
                       gap: 10,
                       paddingTop: 4,
                     }}>
-                    {isOfficer ? (
-                      <Text style={{ color: colors.text, fontSize: 12, fontWeight: '500' }}>
-                        MCDA: {msg.resultCard.topBaseScore.toFixed(3)} (+
-                        {msg.resultCard.deltaVsBaseline.toFixed(3)})
-                      </Text>
-                    ) : null}
-                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '500' }}>
+                    <Text
+                      style={{
+                        color: brandPalette.ultramarineBlue,
+                        fontSize: 12,
+                        fontWeight: '600',
+                      }}>
                       Urea saved: ~{msg.resultCard.ureaSavingsKgPerHa} kg/ha
                     </Text>
                     {isOfficer ? (
@@ -648,8 +885,8 @@ export default function FarmerChatModal() {
                     })
                   }
                   onSelectZone={(cellId) => {
-                    selectCell(cellId);
-                    toast.info('Zone updated', cellId);
+                    handleSwitchPlot(cellId);
+                    toast.info('Plot selected', cellId);
                   }}
                   onSelectArea={(areaHa) => {
                     setFarmAreaHa(areaHa);

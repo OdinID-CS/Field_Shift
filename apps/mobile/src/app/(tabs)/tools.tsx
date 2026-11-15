@@ -42,7 +42,7 @@ export default function ToolsScreen() {
     {
       id: 'calendar',
       title: 'Planting Calendar',
-      subtitle: 'Check wet, bare-soil, and cloudy 10-day windows for your farm.',
+      subtitle: 'Check wet seasons, dry spells, and planting windows for your farm.',
       icon: 'calendar',
       tintBg: theme.sage.surface,
       tintInk: theme.sage.ink,
@@ -174,7 +174,7 @@ export default function ToolsScreen() {
             ]}>
             <PlannerIcon name="shield" size={16} color={theme.secondary} />
             <ThemedText type="small" themeColor="secondary" style={styles.flexOne}>
-              Detailed satellite maps, Scale Honesty audits, and M8 outcome
+              Advanced satellite calibration, evidence audits, and outcome
               grading are available when signed in as an Extension Officer or
               Agronomist.
             </ThemedText>

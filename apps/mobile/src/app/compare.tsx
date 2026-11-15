@@ -501,7 +501,9 @@ export default function CompareScreen() {
                       </ThemedText>
                     </View>
                     <ThemedText type="small" themeColor="mutedText">
-                      Mean rank {stability.meanRank[sIdx].toFixed(2)}
+                      {isOfficer
+                        ? `Mean rank ${stability.meanRank[sIdx].toFixed(2)}`
+                        : 'High consistency'}
                       {stressId !== 'baseline'
                         ? ` · ${deltaPct >= 0 ? `+${deltaPct}` : deltaPct}% vs base`
                         : ''}
@@ -523,10 +525,9 @@ export default function CompareScreen() {
                         <ThemedText
                           type="code"
                           style={{ color: theme.sage.ink }}>
-                          Lowest-Regret Safe Pick
-                          {regretRow
-                            ? ` (gap ${(regretRow.maxRegret * 100).toFixed(0)}%)`
-                            : ''}
+                          {isOfficer
+                            ? `Lowest-Regret Pick${regretRow ? ` (gap ${(regretRow.maxRegret * 100).toFixed(0)}%)` : ''}`
+                            : 'Safest in Hard Weather'}
                         </ThemedText>
                       </View>
                     )}
@@ -552,7 +553,7 @@ export default function CompareScreen() {
                         <ThemedText
                           type="code"
                           style={{ color: theme.personal.ink }}>
-                          -{nOffset.bareDaysAvoided} Harmattan bare d
+                          -{nOffset.bareDaysAvoided} bare soil days
                         </ThemedText>
                       </View>
                     )}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   LayoutChangeEvent,
   Pressable,
@@ -29,14 +29,18 @@ export function TopSearchRegionHeader({
   searchPlaceholder = 'Search region or cell',
   regionCaption = 'Region',
   regionName,
-  showSearch = true,
+  showSearch = false,
+  badgeText = '5×5 KM EO',
+  rightAction,
 }: {
-  searchQuery: string;
-  onChangeSearch: (text: string) => void;
+  searchQuery?: string;
+  onChangeSearch?: (text: string) => void;
   searchPlaceholder?: string;
   regionCaption?: string;
   regionName: string;
   showSearch?: boolean;
+  badgeText?: string;
+  rightAction?: ReactNode;
 }) {
   const theme = useTheme();
 
@@ -67,23 +71,27 @@ export function TopSearchRegionHeader({
           </Text>
         </View>
 
-        <View
-          style={[
-            styles.regionPillBadge,
-            {
-              backgroundColor: theme.personal.surface,
-              borderColor: theme.personal.edge,
-            },
-          ]}>
-          <PlannerIcon name="pin" size={14} color={theme.primary} />
-          <Text
+        {rightAction ? (
+          rightAction
+        ) : (
+          <View
             style={[
-              styles.regionPillText,
-              { color: theme.personal.ink },
+              styles.regionPillBadge,
+              {
+                backgroundColor: theme.personal.surface,
+                borderColor: theme.personal.edge,
+              },
             ]}>
-            5×5 KM EO
-          </Text>
-        </View>
+            <PlannerIcon name="pin" size={14} color={theme.primary} />
+            <Text
+              style={[
+                styles.regionPillText,
+                { color: theme.personal.ink },
+              ]}>
+              {badgeText}
+            </Text>
+          </View>
+        )}
       </View>
 
       {showSearch && (

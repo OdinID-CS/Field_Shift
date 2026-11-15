@@ -89,7 +89,7 @@ export default function HomeScreen() {
     strategies,
   } = usePilotState();
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [plotMenuOpen, setPlotMenuOpen] = useState(false);
 
   const handleSelectCell = (cellId: string) => {
     selectCell(cellId);
@@ -102,22 +102,6 @@ export default function HomeScreen() {
     }
   };
 
-  const handleSearchChange = (text: string) => {
-    setSearchQuery(text);
-    const trimmed = text.trim().toLowerCase();
-    if (trimmed.length >= 2) {
-      const match = cells.find(
-        (c) =>
-          c.cellId.toLowerCase().includes(trimmed) ||
-          c.zoneName.toLowerCase().includes(trimmed) ||
-          c.soilTexture.toLowerCase().includes(trimmed),
-      );
-      if (match && match.cellId !== selectedCell.cellId) {
-        handleSelectCell(match.cellId);
-      }
-    }
-  };
-
   const kpis = CELL_METRICS[selectedCell.cellId] ?? CELL_METRICS.ASH_R05_C05;
   const topPlan = strategies.find((s) => !s.isBaseline) ?? strategies[0];
 
@@ -126,95 +110,115 @@ export default function HomeScreen() {
       edges={['top']}
       style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <TopSearchRegionHeader
-        searchQuery={searchQuery}
-        onChangeSearch={handleSearchChange}
-        searchPlaceholder="Search soil, district, or cell"
         regionCaption="Ashanti Region"
         regionName="Ghana"
-        showSearch={isOfficer}
+        rightAction={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Select plot"
+            accessibilityState={{ expanded: plotMenuOpen }}
+            onPress={() => setPlotMenuOpen((prev) => !prev)}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 5,
+              paddingHorizontal: 11,
+              paddingVertical: 7,
+              borderRadius: roofiRadii.pill,
+              backgroundColor: theme.personal.surface,
+              borderWidth: 1,
+              borderColor: plotMenuOpen ? theme.primary : theme.personal.edge,
+              opacity: pressed ? 0.75 : 1,
+            })}>
+            <PlannerIcon name="pin" size={13} color={theme.primary} />
+            <Text
+              style={{
+                color: theme.personal.ink,
+                fontFamily: roofiTypography.fontFamily.body,
+                fontSize: 12.5,
+                fontWeight: '600',
+              }}>
+              {selectedCell.zoneName.split(' ')[0]}
+            </Text>
+            <PlannerIcon name="chevron" size={12} color={theme.personal.ink} />
+          </Pressable>
+        }
       />
+
+      {plotMenuOpen && (
+        <View
+          style={{
+            paddingHorizontal: roofiSpacing[5],
+            paddingVertical: 8,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.border,
+            backgroundColor: theme.surface,
+            gap: 4,
+          }}>
+          {cells.map((cell) => {
+            const selected = cell.cellId === selectedCell.cellId;
+            const shortName = cell.zoneName.split(' ')[0];
+            return (
+              <Pressable
+                key={cell.cellId}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                onPress={() => {
+                  handleSelectCell(cell.cellId);
+                  setPlotMenuOpen(false);
+                }}
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: 12,
+                  paddingVertical: 9,
+                  borderRadius: 10,
+                  backgroundColor: selected
+                    ? theme.surfaceSubtle
+                    : 'transparent',
+                  opacity: pressed ? 0.7 : 1,
+                })}>
+                <View style={{ flex: 1, gap: 1 }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: theme.foreground,
+                      fontFamily: selected
+                        ? roofiTypography.fontFamily.displayMedium
+                        : roofiTypography.fontFamily.body,
+                      fontSize: 13.5,
+                      fontWeight: selected ? '600' : '400',
+                    }}>
+                    {shortName} · {cell.zoneName}
+                  </Text>
+                  <Text
+                    style={{
+                      color: theme.secondary,
+                      fontFamily: roofiTypography.fontFamily.body,
+                      fontSize: 11,
+                    }}>
+                    {cell.soilTexture} · pH {cell.soilPh}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    color: selected ? theme.primary : theme.secondary,
+                    fontFamily: roofiTypography.fontFamily.body,
+                    fontSize: 12,
+                    fontWeight: selected ? '600' : '400',
+                  }}>
+                  {selected ? 'Active' : cell.cellId.replace('ASH_', '')}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        {/* Autis Planner Horizontal Workspace / Cell Switcher */}
-        <View style={styles.workspaceSwitcherWrap}>
-          <View style={styles.workspaceSwitcherHeader}>
-            <Label>PILOT WORKSPACE CELL</Label>
-            <Text
-              style={[
-                styles.workspaceRoleText,
-                { color: theme.secondary },
-              ]}>
-              {selectedCell.soilTexture} · pH {selectedCell.soilPh}
-            </Text>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.workspacePillsRow}>
-            {cells.map((cell) => {
-              const selected = cell.cellId === selectedCell.cellId;
-              const shortDistrict = cell.zoneName.split(' ')[0];
-              return (
-                <Pressable
-                  key={cell.cellId}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={cell.zoneName}
-                  onPress={() => handleSelectCell(cell.cellId)}
-                  style={[
-                    styles.workspacePill,
-                    {
-                      backgroundColor: selected
-                        ? theme.foreground
-                        : theme.surface,
-                      borderColor: selected ? theme.foreground : theme.border,
-                    },
-                  ]}>
-                  <View
-                    style={[
-                      styles.workspaceInitialBox,
-                      {
-                        backgroundColor: selected
-                          ? theme.surfaceSubtle
-                          : theme.personal.surface,
-                      },
-                    ]}>
-                    <Text
-                      style={[
-                        styles.workspaceInitialText,
-                        { color: theme.primary },
-                      ]}>
-                      {shortDistrict.slice(0, 1).toUpperCase()}
-                    </Text>
-                  </View>
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      styles.workspacePillLabel,
-                      {
-                        color: selected
-                          ? theme.background
-                          : theme.foreground,
-                      },
-                    ]}>
-                    {shortDistrict} · {cell.cellId.replace('ASH_', '')}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* <SmartInsightCard
-          icon={{ ios: 'leaf', android: 'eco', web: 'eco' }}
-          category="THIS WEEK ON YOUR FARM"
-          headline={kpis.insight}
-          footer={`${selectedCell.zoneName} · Major & Minor Rain Windows`}
-          tone="green"
-        /> */}
-
         <View style={styles.kpiGrid}>
           <View style={styles.kpiRow}>
             <KpiMetricCard
@@ -249,6 +253,16 @@ export default function HomeScreen() {
               unit="°C"
               label="Air Temp"
             />
+            <KpiMetricCard
+              icon={{
+                ios: 'cloud.rain',
+                android: 'water_drop',
+                web: 'water_drop',
+              }}
+              value={`${selectedCell.typicalAnnualRainMm}`}
+              unit=" mm"
+              label="Typical Rain"
+            />
           </View>
         </View>
 
@@ -276,7 +290,10 @@ export default function HomeScreen() {
                 <ThemedText type="small" themeColor="secondary">
                   {topPlan.sequence}
                   {topPlan.expectedBenefits[0]
-                    ? ` · ${topPlan.expectedBenefits[0]}`
+                    ? ` · ${topPlan.expectedBenefits[0].replace(
+                        /Biological nitrogen fixation \(~30-60 kg N\/ha\) lowers urea dependence/i,
+                        'Natural nitrogen saves ~1–2 urea bags/ha',
+                      )}`
                     : ''}
                 </ThemedText>
               </View>

@@ -149,16 +149,16 @@ export function RoofiBottomTabBar({
           style={({ pressed }) => ({
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 6,
-            paddingHorizontal: 11,
-            paddingVertical: 8,
+            gap: 5,
+            paddingHorizontal: 10,
+            paddingVertical: 7,
             borderRadius: roofiRadii.pill,
             backgroundColor: roofiNavigation.activeSurface,
             opacity: pressed ? 0.8 : 1,
           })}>
           <PlannerIcon
             name={iconName}
-            size={21}
+            size={18}
             color={roofiNavigation.foreground}
             strokeWidth={2.1}
           />
@@ -167,7 +167,8 @@ export function RoofiBottomTabBar({
             style={{
               color: roofiNavigation.foreground,
               fontFamily: roofiTypography.fontFamily.body,
-              fontSize: 14,
+              fontSize: 13,
+              fontWeight: '600',
               letterSpacing: -0.2,
             }}>
             {label}
@@ -185,19 +186,31 @@ export function RoofiBottomTabBar({
         onPress={onPress}
         onLongPress={onLongPress}
         style={({ pressed }) => ({
+          flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 9,
-          paddingVertical: 8,
+          gap: 4,
+          paddingHorizontal: 8,
+          paddingVertical: 7,
           borderRadius: roofiRadii.pill,
-          opacity: pressed ? 0.5 : 1,
+          opacity: pressed ? 0.6 : 1,
         })}>
         <PlannerIcon
           name={iconName}
-          size={21}
+          size={17}
           color={roofiNavigation.inactive}
-          strokeWidth={1.7}
+          strokeWidth={1.8}
         />
+        <Text
+          numberOfLines={1}
+          style={{
+            color: roofiNavigation.inactive,
+            fontFamily: roofiTypography.fontFamily.body,
+            fontSize: 12.5,
+            fontWeight: '500',
+            letterSpacing: -0.2,
+          }}>
+          {label}
+        </Text>
       </Pressable>
     );
   };
