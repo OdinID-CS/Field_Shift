@@ -198,6 +198,8 @@ Every score is **traceable to its inputs**. Where an input is missing or weak, t
 | **Local knowledge** | Ghanaian agricultural research and extension sources, farmer interviews, local crop calendars |
 
 > Data availability, resolution, quality flags and product versions are recorded for every analysis and surfaced in the Evidence Passport. Where a dataset cannot support a claim at farm scale, the scale-honesty layer says so.
+>
+> 📖 **Full Catalog & Direct Links:** See [docs/DATASETS.md](file:///Users/kaliblip/Developer/Field_Shift/docs/DATASETS.md) for the complete 15-dataset registry with direct NASA Earthdata search links, DAAC landing pages, DOIs, API endpoints, resolution matrices, and our non-global US baseline replacement rationale.
 
 ---
 
@@ -375,13 +377,14 @@ See [docs/BUILD_PHASES_AND_WORK_SPLIT.md](docs/BUILD_PHASES_AND_WORK_SPLIT.md) f
 
 ## 📚 Data and references
 
+- **[Field Shift Dataset Registry & Links (docs/DATASETS.md)](file:///Users/kaliblip/Developer/Field_Shift/docs/DATASETS.md)** — Complete catalog of all 15 Earth observation, atmospheric, soil, elevation, and agronomic datasets with Earthdata/DAAC/DOI links.
 - [NASA Earthdata](https://www.earthdata.nasa.gov/)
 - [NASA POWER](https://power.larc.nasa.gov/)
 - [NASA Global Precipitation Measurement (GPM)](https://gpm.nasa.gov/data)
 - [NASA Soil Moisture Active Passive (SMAP)](https://smap.jpl.nasa.gov/)
 - [NASA Landsat](https://landsat.gsfc.nasa.gov/)
 - [Challenge page: Adapting Farms with NASA Data](https://www.spaceappschallenge.org/2026/challenges/adapting-farms-with-nasa-data/)
-- ISRIC SoilGrids, FAO GAEZ and ECMWF ERA5 (see each provider's site for access and licence terms)
+- ISRIC SoilGrids, iSDAsoil Africa, Copernicus DEM, and ECMWF ERA5 (see each provider's site for access and licence terms)
 
 ---
 
