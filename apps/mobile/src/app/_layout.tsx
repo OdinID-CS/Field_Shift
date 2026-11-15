@@ -35,6 +35,13 @@ function AuthenticatedShell() {
             animation: 'slide_from_right',
           }}
         />
+        <Stack.Screen
+          name="chat"
+          options={{
+            presentation: 'fullScreenModal',
+            animation: 'slide_from_bottom',
+          }}
+        />
       </Stack>
       <Toaster position="top-center" theme="system" />
     </>

@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +33,7 @@ export function RoofiBottomTabBar({
   emitter,
   navigateToTab,
 }: BottomTabBarProps) {
+  const router = useRouter();
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const isDark = scheme === 'dark';
@@ -90,6 +91,121 @@ export function RoofiBottomTabBar({
     }
   };
 
+  const visibleRoutes = state.routes.filter((route) => {
+    if (!VISIBLE_TABS.has(route.name)) return false;
+    const options = descriptors[route.key]?.options as
+      | { href?: string | null }
+      | undefined;
+    return options?.href !== null;
+  });
+
+  const leftRoutes = visibleRoutes.slice(0, 2);
+  const rightRoutes = visibleRoutes.slice(2);
+
+  const renderTabItem = (route: (typeof state.routes)[number]) => {
+    const routeIndex = state.routes.findIndex((r) => r.key === route.key);
+    const options = descriptors[route.key]?.options as
+      | {
+          tabBarLabel?: string;
+          title?: string;
+          tabBarAccessibilityLabel?: string;
+        }
+      | undefined;
+
+    const isFocused = state.index === routeIndex;
+    const label =
+      typeof options?.tabBarLabel === 'string'
+        ? options.tabBarLabel
+        : typeof options?.title === 'string'
+          ? options.title
+          : route.name;
+
+    const iconName = tabIcons[route.name] ?? 'home';
+
+    const onPress = () => {
+      const event = emitter.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+
+      if (!isFocused && !event.defaultPrevented) {
+        navigateToTab(route.key);
+      }
+    };
+
+    const onLongPress = () => {
+      emitter.emit({
+        type: 'tabLongPress',
+        target: route.key,
+      });
+    };
+
+    if (isFocused) {
+      return (
+        <Pressable
+          key={route.key}
+          accessibilityRole="button"
+          accessibilityState={{ selected: true }}
+          accessibilityLabel={options?.tabBarAccessibilityLabel ?? label}
+          onPress={onPress}
+          onLongPress={onLongPress}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 7,
+            paddingHorizontal: 14,
+            paddingVertical: 9,
+            borderRadius: roofiRadii.pill,
+            backgroundColor: roofiNavigation.activeSurface,
+            opacity: pressed ? 0.8 : 1,
+          })}>
+          <PlannerIcon
+            name={iconName}
+            size={21}
+            color={roofiNavigation.foreground}
+            strokeWidth={2.1}
+          />
+          <Text
+            numberOfLines={1}
+            style={{
+              color: roofiNavigation.foreground,
+              fontFamily: roofiTypography.fontFamily.bodyBold,
+              fontSize: 14,
+              letterSpacing: -0.2,
+            }}>
+            {label}
+          </Text>
+        </Pressable>
+      );
+    }
+
+    return (
+      <Pressable
+        key={route.key}
+        accessibilityRole="button"
+        accessibilityState={{ selected: false }}
+        accessibilityLabel={options?.tabBarAccessibilityLabel ?? label}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={({ pressed }) => ({
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 13,
+          paddingVertical: 9,
+          borderRadius: roofiRadii.pill,
+          opacity: pressed ? 0.5 : 1,
+        })}>
+        <PlannerIcon
+          name={iconName}
+          size={21}
+          color={roofiNavigation.inactive}
+          strokeWidth={1.7}
+        />
+      </Pressable>
+    );
+  };
+
   return (
     <View
       pointerEvents="box-none"
@@ -104,132 +220,57 @@ export function RoofiBottomTabBar({
         gap: 10,
         paddingBottom: Math.max(insets.bottom, 12),
       }}>
-      {/* Primary 4-tab pill dock */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 10,
-          paddingVertical: 7,
-          borderRadius: 28,
-          backgroundColor: roofiNavigation.background,
-          borderWidth: 1,
-          borderColor: isDark
-            ? 'rgba(255,255,255,0.12)'
-            : 'rgba(23,23,23,0.08)',
-          elevation: 8,
-          shadowColor: '#171717',
-          shadowOpacity: isDark ? 0.4 : 0.16,
-          shadowRadius: 14,
-          shadowOffset: { width: 0, height: 4 },
-          gap: 5,
-        }}>
-        {state.routes.map((route, index) => {
-          if (!VISIBLE_TABS.has(route.name)) return null;
-          const options = descriptors[route.key]?.options as
-            | {
-                href?: string | null;
-                tabBarLabel?: string;
-                title?: string;
-                tabBarAccessibilityLabel?: string;
-              }
-            | undefined;
-          if (options?.href === null) return null;
+      {/* Primary 4-tab pill dock with half-floating center Chat FAB */}
+      <View style={{ position: 'relative', alignItems: 'center' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 10,
+            paddingVertical: 7,
+            borderRadius: 28,
+            backgroundColor: roofiNavigation.background,
+            borderWidth: 1,
+            borderColor: isDark
+              ? 'rgba(255,255,255,0.12)'
+              : 'rgba(23,23,23,0.08)',
+            elevation: 8,
+            shadowColor: '#171717',
+            shadowOpacity: isDark ? 0.4 : 0.16,
+            shadowRadius: 14,
+            shadowOffset: { width: 0, height: 4 },
+            gap: 4,
+          }}>
+          {leftRoutes.map(renderTabItem)}
+          <View style={{ width: 58 }} />
+          {rightRoutes.map(renderTabItem)}
+        </View>
 
-          const isFocused = state.index === index;
-          const label =
-            typeof options?.tabBarLabel === 'string'
-              ? options.tabBarLabel
-              : typeof options?.title === 'string'
-                ? options.title
-                : route.name;
-
-          const iconName = tabIcons[route.name] ?? 'home';
-
-          const onPress = () => {
-            const event = emitter.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!isFocused && !event.defaultPrevented) {
-              navigateToTab(route.key);
-            }
-          };
-
-          const onLongPress = () => {
-            emitter.emit({
-              type: 'tabLongPress',
-              target: route.key,
-            });
-          };
-
-          if (isFocused) {
-            return (
-              <Pressable
-                key={route.key}
-                accessibilityRole="button"
-                accessibilityState={{ selected: true }}
-                accessibilityLabel={options?.tabBarAccessibilityLabel ?? label}
-                onPress={onPress}
-                onLongPress={onLongPress}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 7,
-                  paddingHorizontal: 14,
-                  paddingVertical: 9,
-                  borderRadius: roofiRadii.pill,
-                  backgroundColor: roofiNavigation.activeSurface,
-                  opacity: pressed ? 0.8 : 1,
-                })}>
-                <PlannerIcon
-                  name={iconName}
-                  size={21}
-                  color={roofiNavigation.foreground}
-                  strokeWidth={2.1}
-                />
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    color: roofiNavigation.foreground,
-                    fontFamily: roofiTypography.fontFamily.bodyBold,
-                    fontSize: 14,
-                    letterSpacing: -0.2,
-                  }}>
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          }
-
-          return (
-            <Pressable
-              key={route.key}
-              accessibilityRole="button"
-              accessibilityState={{ selected: false }}
-              accessibilityLabel={options?.tabBarAccessibilityLabel ?? label}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              style={({ pressed }) => ({
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingHorizontal: 13,
-                paddingVertical: 9,
-                borderRadius: roofiRadii.pill,
-                opacity: pressed ? 0.5 : 1,
-              })}>
-              <PlannerIcon
-                name={iconName}
-                size={21}
-                color={roofiNavigation.inactive}
-                strokeWidth={1.7}
-              />
-            </Pressable>
-          );
-        })}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open ScalarField AI Advisor Chat"
+          onPress={() => router.push('/chat')}
+          style={({ pressed }) => ({
+            position: 'absolute',
+            top: -22,
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: brandPalette.ultramarineBlue,
+            borderWidth: 3,
+            borderColor: colors.background,
+            elevation: 10,
+            shadowColor: brandPalette.ultramarineBlue,
+            shadowOpacity: 0.35,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 4 },
+            opacity: pressed ? 0.85 : 1,
+          })}>
+          <PlannerIcon name="chat" size={24} color="#FFFFFF" strokeWidth={2} />
+        </Pressable>
       </View>
 
       {/* Detached right-side Sync extension tab with status fill & queue count badge */}
