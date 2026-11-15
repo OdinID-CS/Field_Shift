@@ -74,19 +74,13 @@ export function RoofiBottomTabBar({
     await refreshLivePilotData();
     if (!isConnected) {
       toast.warning(
-        'Offline mode',
-        `Showing ${sourceLabel}${queuedLogsCount > 0 ? ` · ${queuedLogsCount} queued` : ''}.`,
+        'Offline',
+        queuedLogsCount > 0 ? `${queuedLogsCount} saved on phone` : undefined,
       );
     } else if (queuedLogsCount > 0) {
-      toast.info(
-        `Syncing ${queuedLogsCount} queued item(s)`,
-        `${sourceLabel} · Flushing offline field queue to Supabase.`,
-      );
+      toast.info('Syncing', `Uploading ${queuedLogsCount} item(s)...`);
     } else {
-      toast.success(
-        `Synced · ${sourceLabel}`,
-        '30 m HLS, 30 m iSDAsoil, and field logs are up to date.',
-      );
+      toast.success('Synced', 'Data is up to date.');
     }
   };
 

@@ -95,10 +95,7 @@ export default function HomeScreen() {
     selectCell(cellId);
     const target = cells.find((c) => c.cellId === cellId);
     if (target) {
-      toast.info(
-        `Switched to ${target.cellId}`,
-        `${target.zoneName} · ${target.soilTexture} (pH ${target.soilPh})`,
-      );
+      toast.info(`Plot: ${target.zoneName.split(' ')[0]}`);
     }
   };
 

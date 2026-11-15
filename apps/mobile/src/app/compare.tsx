@@ -207,15 +207,9 @@ export default function CompareScreen() {
       reasoningNotes: `Selected under ${activeScenario.shortLabel} preset`,
     });
     if (res.status === 'submitted') {
-      toast.success(
-        `Logged ${strategyName}`,
-        'Saved to Supabase farmer decision log.',
-      );
+      toast.success('Plan saved', strategyName);
     } else {
-      toast.warning(
-        `Saved ${strategyName} offline`,
-        `${res.queuedCount} decision(s) queued to sync when online.`,
-      );
+      toast.warning('Saved offline', 'Will sync when online.');
     }
   };
 

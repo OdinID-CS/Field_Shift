@@ -213,10 +213,7 @@ export default function CalendarScreen() {
     const idx = cells.findIndex((c) => c.cellId === selectedCell.cellId);
     const next = cells[(idx + 1) % cells.length];
     selectCell(next.cellId);
-    toast.info(
-      `Cell ${next.cellId}`,
-      `${next.zoneName} · 36-dekad vulnerability calendar`,
-    );
+    toast.info(`Plot: ${next.zoneName.split(' ')[0]}`);
   };
 
   const handleFilterSelect = (nextFilter: CalendarFilter) => {

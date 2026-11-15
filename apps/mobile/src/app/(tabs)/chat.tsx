@@ -359,7 +359,7 @@ export default function FarmerChatModal() {
     const status = res.status === 'submitted' ? 'synced' : 'queued';
     toast.success(
       status === 'synced' ? 'Plan Saved' : 'Saved Offline',
-      `${selectedCell.cellId} · ${strategy.name}`,
+      strategy.name,
     );
 
     appendAssistantBubble({
@@ -886,11 +886,11 @@ export default function FarmerChatModal() {
                   }
                   onSelectZone={(cellId) => {
                     handleSwitchPlot(cellId);
-                    toast.info('Plot selected', cellId);
+                    toast.info(`Plot: ${cellId.replace('ASH_', '')}`);
                   }}
                   onSelectArea={(areaHa) => {
                     setFarmAreaHa(areaHa);
-                    toast.info('Farm size updated', `${areaHa} ha`);
+                    toast.info(`Farm size: ${areaHa} ha`);
                   }}
                   onRunPrompt={(prompt) => void handleSend(prompt)}
                   onOpenCalendar={handleOpenCalendarInChat}

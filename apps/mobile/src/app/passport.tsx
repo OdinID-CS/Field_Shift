@@ -132,10 +132,7 @@ export default function PassportScreen() {
       if (source === 'camera') {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          toast.warning(
-            'Camera permission needed',
-            'Allow camera access to scan plot cover offline.',
-          );
+          toast.warning('Camera permission needed');
           return;
         }
       }
@@ -184,15 +181,9 @@ export default function PassportScreen() {
     setScanUri(null);
     setScanPrediction(null);
     if (res.status === 'submitted') {
-      toast.success(
-        'Field observation submitted',
-        'Queued for extension-officer verification (does not auto-shift model).',
-      );
+      toast.success('Report submitted', 'Saved to field log.');
     } else {
-      toast.warning(
-        'Field observation saved offline',
-        `${res.queuedCount} report(s) waiting for connection.`,
-      );
+      toast.warning('Saved offline', 'Will sync when online.');
     }
   };
 

@@ -46,13 +46,13 @@ export default function ProfileScreen() {
     await refreshLivePilotData();
     if (!isConnected) {
       toast.warning(
-        'Offline mode',
+        'Offline',
         queuedLogsCount > 0
-          ? `${queuedLogsCount} note(s) saved safely on your phone.`
-          : 'Using cached Ashanti farm pack.',
+          ? `${queuedLogsCount} saved on phone`
+          : undefined,
       );
     } else {
-      toast.success('Synced', 'Farm data and saved notes are up to date.');
+      toast.success('Synced', 'Data is up to date.');
     }
   };
 
