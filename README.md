@@ -4,7 +4,7 @@
 
 **NASA Space Apps Challenge 2026 · Challenge: _Field Shift: Adapting Farms with NASA Data_**
 **Initial focus region: Ashanti Region, Ghana**
-**Live Web & API Deployment: [https://fieldshift.vercel.app](https://fieldshift.vercel.app)**
+**Live Web & API Deployment: [https://scalarfield.vercel.app](https://scalarfield.vercel.app)**
 
 ### Challenge Demo Credentials (Mobile & Web `/login`)
 
@@ -198,6 +198,8 @@ Every score is **traceable to its inputs**. Where an input is missing or weak, t
 | **Local knowledge** | Ghanaian agricultural research and extension sources, farmer interviews, local crop calendars |
 
 > Data availability, resolution, quality flags and product versions are recorded for every analysis and surfaced in the Evidence Passport. Where a dataset cannot support a claim at farm scale, the scale-honesty layer says so.
+>
+> 📖 **Full Catalog & Direct Links:** See [docs/DATASETS.md](file:///Users/kaliblip/Developer/Field_Shift/docs/DATASETS.md) for the complete 15-dataset registry with direct NASA Earthdata search links, DAAC landing pages, DOIs, API endpoints, resolution matrices, and our non-global US baseline replacement rationale.
 
 ---
 
@@ -323,7 +325,7 @@ Field Shift follows a modular design that separates **data acquisition, processi
 | Interface | Maps, calendar, scenario sliders, comparison cards, glossary |
 | Feedback | Decision and outcome logging, evidence grading |
 
-> **Implemented technology stack:** Next.js 16 (App Router, TypeScript, Tailwind CSS) + FastAPI on Vercel (`https://fieldshift.vercel.app`), Expo SDK 58 / React Native `0.88.1` (`apps/mobile`) with EAS Build, Supabase (PostgreSQL + PostGIS + RLS), and an offline Python geospatial/ML pipeline (`pipeline/`).
+> **Implemented technology stack:** Next.js 16 (App Router, TypeScript, Tailwind CSS) + FastAPI on Vercel (`https://scalarfield.vercel.app`), Expo SDK 58 / React Native `0.88.1` (`apps/mobile`) with EAS Build, Supabase (PostgreSQL + PostGIS + RLS), and an offline Python geospatial/ML pipeline (`pipeline/`).
 
 ---
 
@@ -340,7 +342,7 @@ See [docs/BUILD_PHASES_AND_WORK_SPLIT.md](docs/BUILD_PHASES_AND_WORK_SPLIT.md) f
 | 2. Environmental intelligence & core visuals | Harmonised features (WaPOR `P/ET0`, flash drought), M1–M4 models, `knowledge/` CSVs, Web Calendar & Map | `kaliblip` (ML/knowledge) · `OdinID-CS` (calendar/map/scale UI) | ✅ Done |
 | 3. Decision & evidence layer | M6 fusion (N-fixation urea savings), M7 Passports, seeded Supabase, comparison cards, mobile & glossary | `kaliblip` (M6/M7/mobile) · `OdinID-CS` (cards/passport/glossary) | ✅ Done |
 | 4. Stress-testing & offline | Analog season replay, minimax regret, climate sliders, mobile offline cache & decision/outcome queue | `kaliblip` (analogs/regret/mobile) · `OdinID-CS` (sliders/PWA/print) | ✅ Done |
-| 5. Validation, localization & demo | Time-aware validation, M1–M8 model cards, mobile EN/Twi SMS export, Web i18n, officer workflow, multi-service Vercel deploy (`https://fieldshift.vercel.app`) | `kaliblip` (validation/mobile/api) · `OdinID-CS` (i18n/officer/web) | ✅ Done |
+| 5. Validation, localization & demo | Time-aware validation, M1–M8 model cards, mobile EN/Twi SMS export, Web i18n, officer workflow, multi-service Vercel deploy (`https://scalarfield.vercel.app`) | `kaliblip` (validation/mobile/api) · `OdinID-CS` (i18n/officer/web) | ✅ Done |
 | 6. Scientific enhancements & scale-out | M8 conjugate Bayesian outcome updating (`models/feedback.py`), live Africa's Talking SMS/USSD & WhatsApp webhooks, OpenRouter + deterministic MCDA AI Advisor Chat (`/api/chat` + mobile modal), mobile `roofi` design system & Scale Honesty audit | `kaliblip` + `OdinID-CS` | ✅ Done |
 
 ### Planned demo story
@@ -375,13 +377,14 @@ See [docs/BUILD_PHASES_AND_WORK_SPLIT.md](docs/BUILD_PHASES_AND_WORK_SPLIT.md) f
 
 ## 📚 Data and references
 
+- **[Field Shift Dataset Registry & Links (docs/DATASETS.md)](file:///Users/kaliblip/Developer/Field_Shift/docs/DATASETS.md)** — Complete catalog of all 15 Earth observation, atmospheric, soil, elevation, and agronomic datasets with Earthdata/DAAC/DOI links.
 - [NASA Earthdata](https://www.earthdata.nasa.gov/)
 - [NASA POWER](https://power.larc.nasa.gov/)
 - [NASA Global Precipitation Measurement (GPM)](https://gpm.nasa.gov/data)
 - [NASA Soil Moisture Active Passive (SMAP)](https://smap.jpl.nasa.gov/)
 - [NASA Landsat](https://landsat.gsfc.nasa.gov/)
 - [Challenge page: Adapting Farms with NASA Data](https://www.spaceappschallenge.org/2026/challenges/adapting-farms-with-nasa-data/)
-- ISRIC SoilGrids, FAO GAEZ and ECMWF ERA5 (see each provider's site for access and licence terms)
+- ISRIC SoilGrids, iSDAsoil Africa, Copernicus DEM, and ECMWF ERA5 (see each provider's site for access and licence terms)
 
 ---
 
