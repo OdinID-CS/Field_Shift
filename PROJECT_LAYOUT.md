@@ -1,14 +1,14 @@
 # Field Shift: project layout and dependency split
 
-Status: proposal from the team-stack discussion, 14 November 2026. Items marked "verify" were not tested.
+Status: active monorepo layout (updated 15 November 2026). All four test suites (`pipeline`, `apps/api`, `apps/web`, `apps/mobile`) run in CI.
 
 ## Repository layout (one repo, web, mobile, optional API, one offline pipeline)
 
 ```text
 field-shift/
 ├── apps/
-│   ├── web/                  Next.js app (Vercel project 1, Root Directory: apps/web)
-│   ├── mobile/               React Native (Expo SDK 58) app
+│   ├── web/                  Next.js app (Vercel project 1, Root Directory: apps/web; includes `/api/chat` OpenRouter + MCDA endpoint)
+│   ├── mobile/               React Native (Expo SDK 58) app ("ScalarField", EAS build configured in `eas.json`, floating AI Advisor Chat modal)
 │   └── api/                  Optional FastAPI decision service (Vercel project 2, Root Directory: apps/api)
 │       ├── index.py          Defines the top-level `app` that Vercel loads
 │       ├── scoring.py        numpy-only scoring and rank probabilities

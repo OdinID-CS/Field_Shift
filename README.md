@@ -83,6 +83,7 @@ Most example datasets in the challenge brief are US-only (CDL, Web Soil Survey, 
 | 6 | **Scale-honesty layer** | Compares each dataset's pixel footprint (e.g., 30 m iSDAsoil/HLS vs. 250 m SoilGrids/MODIS vs. 9 km SMAP) with the farm area and flags coarse pixels. | Prevents over-claiming farm-level precision from coarse data. |
 | 7 | **Controlled feedback loop** | Farmer decisions and outcomes are logged offline/online, quality-graded by extension officers (`M8` Normal-conjugate calibration only on verified grades). | Turns local experience into evidence without polluting models with noisy labels. |
 | 8 | **Low-bandwidth EN + Twi cards** | Short `<320`-char summary cards in plain English and Ashanti Twi (with urea-bag N-fixation savings & bare-days avoided), shareable over SMS/WhatsApp. | Usable by farmers and extension officers with limited connectivity or technical background. |
+| 9 | **AI Advisor Chat (`/api/chat`)** | Mobile floating chat modal (`apps/mobile/src/app/chat.tsx`) backed by OpenRouter + deterministic MCDA pipeline scoring (`/api/chat`), returning grounded strategy cards that apply directly to Compare Studio. | Lets farmers ask natural-language questions while keeping every score, urea estimate, and scale-honesty note deterministically grounded. |
 
 ---
 
@@ -322,7 +323,7 @@ Field Shift follows a modular design that separates **data acquisition, processi
 | Interface | Maps, calendar, scenario sliders, comparison cards, glossary |
 | Feedback | Decision and outcome logging, evidence grading |
 
-> **Technology stack: to be finalised.** The architecture above is technology-neutral. Specific tools will be selected and documented once the MVP scope is agreed.
+> **Implemented technology stack:** Next.js 16 (App Router, TypeScript, Tailwind CSS) + FastAPI on Vercel (`https://fieldshift.vercel.app`), Expo SDK 58 / React Native `0.88.1` (`apps/mobile`) with EAS Build, Supabase (PostgreSQL + PostGIS + RLS), and an offline Python geospatial/ML pipeline (`pipeline/`).
 
 ---
 
@@ -340,7 +341,7 @@ See [docs/BUILD_PHASES_AND_WORK_SPLIT.md](docs/BUILD_PHASES_AND_WORK_SPLIT.md) f
 | 3. Decision & evidence layer | M6 fusion (N-fixation urea savings), M7 Passports, seeded Supabase, comparison cards, mobile & glossary | `kaliblip` (M6/M7/mobile) · `OdinID-CS` (cards/passport/glossary) | ✅ Done |
 | 4. Stress-testing & offline | Analog season replay, minimax regret, climate sliders, mobile offline cache & decision/outcome queue | `kaliblip` (analogs/regret/mobile) · `OdinID-CS` (sliders/PWA/print) | ✅ Done |
 | 5. Validation, localization & demo | Time-aware validation, M1–M8 model cards, mobile EN/Twi SMS export, Web i18n, officer workflow, multi-service Vercel deploy (`https://fieldshift.vercel.app`) | `kaliblip` (validation/mobile/api) · `OdinID-CS` (i18n/officer/web) | ✅ Done |
-| 6. Scientific enhancements & scale-out | M8 conjugate Bayesian outcome updating (`models/feedback.py`), live Africa's Talking SMS/USSD & WhatsApp webhooks, mobile `roofi` design system & Scale Honesty audit | `kaliblip` + `OdinID-CS` | ✅ Done |
+| 6. Scientific enhancements & scale-out | M8 conjugate Bayesian outcome updating (`models/feedback.py`), live Africa's Talking SMS/USSD & WhatsApp webhooks, OpenRouter + deterministic MCDA AI Advisor Chat (`/api/chat` + mobile modal), mobile `roofi` design system & Scale Honesty audit | `kaliblip` + `OdinID-CS` | ✅ Done |
 
 ### Planned demo story
 

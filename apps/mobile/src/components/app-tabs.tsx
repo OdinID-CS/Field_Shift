@@ -153,9 +153,9 @@ export function RoofiBottomTabBar({
           style={({ pressed }) => ({
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 7,
-            paddingHorizontal: 14,
-            paddingVertical: 9,
+            gap: 6,
+            paddingHorizontal: 11,
+            paddingVertical: 8,
             borderRadius: roofiRadii.pill,
             backgroundColor: roofiNavigation.activeSurface,
             opacity: pressed ? 0.8 : 1,
@@ -191,8 +191,8 @@ export function RoofiBottomTabBar({
         style={({ pressed }) => ({
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: 13,
-          paddingVertical: 9,
+          paddingHorizontal: 9,
+          paddingVertical: 8,
           borderRadius: roofiRadii.pill,
           opacity: pressed ? 0.5 : 1,
         })}>
@@ -217,60 +217,66 @@ export function RoofiBottomTabBar({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 10,
+        paddingHorizontal: 10,
+        gap: 8,
         paddingBottom: Math.max(insets.bottom, 12),
       }}>
       {/* Primary 4-tab pill dock with half-floating center Chat FAB */}
-      <View style={{ position: 'relative', alignItems: 'center' }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 7,
+          paddingVertical: 6,
+          borderRadius: 28,
+          backgroundColor: roofiNavigation.background,
+          borderWidth: 1,
+          borderColor: isDark
+            ? 'rgba(255,255,255,0.12)'
+            : 'rgba(23,23,23,0.08)',
+          elevation: 8,
+          shadowColor: '#171717',
+          shadowOpacity: isDark ? 0.4 : 0.16,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 4 },
+          gap: 2,
+        }}>
+        {leftRoutes.map(renderTabItem)}
         <View
           style={{
-            flexDirection: 'row',
+            width: 52,
+            height: 36,
             alignItems: 'center',
             justifyContent: 'center',
-            paddingHorizontal: 10,
-            paddingVertical: 7,
-            borderRadius: 28,
-            backgroundColor: roofiNavigation.background,
-            borderWidth: 1,
-            borderColor: isDark
-              ? 'rgba(255,255,255,0.12)'
-              : 'rgba(23,23,23,0.08)',
-            elevation: 8,
-            shadowColor: '#171717',
-            shadowOpacity: isDark ? 0.4 : 0.16,
-            shadowRadius: 14,
-            shadowOffset: { width: 0, height: 4 },
-            gap: 4,
+            position: 'relative',
           }}>
-          {leftRoutes.map(renderTabItem)}
-          <View style={{ width: 58 }} />
-          {rightRoutes.map(renderTabItem)}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open ScalarField AI Advisor Chat"
+            onPress={() => router.push('/chat')}
+            style={({ pressed }) => ({
+              position: 'absolute',
+              top: -26,
+              width: 52,
+              height: 52,
+              borderRadius: 26,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: brandPalette.ultramarineBlue,
+              borderWidth: 3,
+              borderColor: colors.background,
+              elevation: 10,
+              shadowColor: brandPalette.ultramarineBlue,
+              shadowOpacity: 0.35,
+              shadowRadius: 12,
+              shadowOffset: { width: 0, height: 4 },
+              opacity: pressed ? 0.85 : 1,
+            })}>
+            <PlannerIcon name="chat" size={22} color="#FFFFFF" strokeWidth={2} />
+          </Pressable>
         </View>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open ScalarField AI Advisor Chat"
-          onPress={() => router.push('/chat')}
-          style={({ pressed }) => ({
-            position: 'absolute',
-            top: -22,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: brandPalette.ultramarineBlue,
-            borderWidth: 3,
-            borderColor: colors.background,
-            elevation: 10,
-            shadowColor: brandPalette.ultramarineBlue,
-            shadowOpacity: 0.35,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 4 },
-            opacity: pressed ? 0.85 : 1,
-          })}>
-          <PlannerIcon name="chat" size={24} color="#FFFFFF" strokeWidth={2} />
-        </Pressable>
+        {rightRoutes.map(renderTabItem)}
       </View>
 
       {/* Detached right-side Sync extension tab with status fill & queue count badge */}
@@ -280,9 +286,9 @@ export function RoofiBottomTabBar({
         onPress={() => void handleSyncPress()}
         style={({ pressed }) => ({
           position: 'relative',
-          width: 53,
-          height: 53,
-          borderRadius: 27,
+          width: 48,
+          height: 48,
+          borderRadius: 24,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: syncFillColor,
@@ -297,7 +303,7 @@ export function RoofiBottomTabBar({
         })}>
         <PlannerIcon
           name="repeat"
-          size={21}
+          size={20}
           color={syncIconColor}
           strokeWidth={2.1}
         />
@@ -306,10 +312,10 @@ export function RoofiBottomTabBar({
           <View
             style={{
               position: 'absolute',
-              top: -5,
-              right: -5,
-              minWidth: 22,
-              height: 22,
+              top: -4,
+              right: -4,
+              minWidth: 20,
+              height: 20,
               paddingHorizontal: 5,
               borderRadius: roofiRadii.pill,
               backgroundColor: brandPalette.chineseBlack,
