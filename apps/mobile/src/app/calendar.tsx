@@ -33,6 +33,7 @@ import {
   roofiSpacing,
   roofiTypography,
 } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
 import { usePilotState } from '@/hooks/use-pilot-state';
 import { useTheme } from '@/hooks/use-theme';
 import { toast } from '@/lib/toast';
@@ -190,6 +191,9 @@ function CollapsibleChartSection({
 export default function CalendarScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { session } = useAuth();
+  const isOfficer =
+    session?.role === 'extension_officer' || session?.role === 'agronomist';
   const { cells, selectedCell, selectCell } = usePilotState();
   const [filter, setFilter] = useState<CalendarFilter>('all');
   const [openCharts, setOpenCharts] = useState<Record<ChartSectionKey, boolean>>({
@@ -318,20 +322,22 @@ export default function CalendarScreen() {
           metaRight="36-DEKAD BASELINE"
         />
 
-        <View style={styles.sectionRow}>
-          <Heading title="Climate & Canopy Charts" />
-          <View
-            style={[
-              styles.countBadge,
-              { backgroundColor: theme.surfaceSubtle },
-            ]}>
-            <ThemedText type="code" themeColor="secondary">
-              TAP TO EXPAND
-            </ThemedText>
-          </View>
-        </View>
+        {isOfficer ? (
+          <>
+            <View style={styles.sectionRow}>
+              <Heading title="Climate & Canopy Charts" />
+              <View
+                style={[
+                  styles.countBadge,
+                  { backgroundColor: theme.surfaceSubtle },
+                ]}>
+                <ThemedText type="code" themeColor="secondary">
+                  TAP TO EXPAND
+                </ThemedText>
+              </View>
+            </View>
 
-        <View style={styles.bentoGrid}>
+            <View style={styles.bentoGrid}>
           <CollapsibleChartSection
             title="Vegetation Cover & Moisture"
             metricValue="46% AVG"
@@ -433,6 +439,8 @@ export default function CalendarScreen() {
             />
           </CollapsibleChartSection>
         </View>
+          </>
+        ) : null}
           </>
         ) : (
           <>

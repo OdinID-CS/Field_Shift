@@ -25,6 +25,7 @@ import {
   roofiRadii,
   roofiSpacing,
 } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
 import { usePilotState } from '@/hooks/use-pilot-state';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -62,6 +63,9 @@ const VIEW_MODE_OPTIONS = [
 export default function CompareScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { session } = useAuth();
+  const isOfficer =
+    session?.role === 'extension_officer' || session?.role === 'agronomist';
   const {
     selectedCell,
     weights,
@@ -232,30 +236,34 @@ export default function CompareScreen() {
           onPress: () => router.back(),
           accessibilityLabel: 'Back to Tools',
         }}
-        rightActions={[
-          {
-            id: 'preset-filter',
-            icon: {
-              ios: 'slider.horizontal.3',
-              android: 'tune',
-              web: 'tune',
-            },
-            badgeDot: true,
-            onPress: () => setShowPriorityEditor((v) => !v),
-            accessibilityLabel: 'Toggle priority weight sliders',
-          },
-          {
-            id: 'add-adjust',
-            icon: {
-              ios: 'plus',
-              android: 'add',
-              web: 'add',
-            },
-            variant: 'primary',
-            onPress: () => setShowPriorityEditor((v) => !v),
-            accessibilityLabel: 'Adjust farmer priorities',
-          },
-        ]}
+        rightActions={
+          isOfficer
+            ? [
+                {
+                  id: 'preset-filter',
+                  icon: {
+                    ios: 'slider.horizontal.3',
+                    android: 'tune',
+                    web: 'tune',
+                  },
+                  badgeDot: true,
+                  onPress: () => setShowPriorityEditor((v) => !v),
+                  accessibilityLabel: 'Toggle priority weight sliders',
+                },
+                {
+                  id: 'add-adjust',
+                  icon: {
+                    ios: 'plus',
+                    android: 'add',
+                    web: 'add',
+                  },
+                  variant: 'primary',
+                  onPress: () => setShowPriorityEditor((v) => !v),
+                  accessibilityLabel: 'Adjust farmer priorities',
+                },
+              ]
+            : undefined
+        }
       />
 
       <ScrollView
@@ -300,13 +308,15 @@ export default function CompareScreen() {
           )}
         </View>
 
-        <SegmentedPillBar
-          options={VIEW_MODE_OPTIONS}
-          selectedId={viewMode}
-          onSelect={(id) => setViewMode(id as 'cards' | 'matrix')}
-        />
+        {isOfficer ? (
+          <SegmentedPillBar
+            options={VIEW_MODE_OPTIONS}
+            selectedId={viewMode}
+            onSelect={(id) => setViewMode(id as 'cards' | 'matrix')}
+          />
+        ) : null}
 
-        {showPriorityEditor && (
+        {isOfficer && showPriorityEditor && (
           <View
             style={[
               styles.editorCard,

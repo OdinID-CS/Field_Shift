@@ -218,14 +218,16 @@ export default function PassportScreen() {
       : session?.role === 'agronomist'
         ? 'Agronomist'
         : 'Farmer';
+  const isOfficer =
+    session?.role === 'extension_officer' || session?.role === 'agronomist';
 
   return (
     <SafeAreaView
       edges={['top']}
       style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <TopBarHeader
-        title="Evidence Passports"
-        subtitle={`${selectedCell.cellId} · ${roleLabel} · ${sourceLabel}`}
+        title={isOfficer ? 'Evidence Passports' : 'Scan My Plot'}
+        subtitle={`${selectedCell.zoneName} · ${roleLabel}`}
         leftAction={{
           id: 'back-tools',
           icon: {
@@ -236,40 +238,46 @@ export default function PassportScreen() {
           onPress: () => router.back(),
           accessibilityLabel: 'Back to Tools',
         }}
-        rightActions={[
-          {
-            id: 'reset-tier',
-            icon: {
-              ios: 'shield.checkered',
-              android: 'verified_user',
-              web: 'verified_user',
-            },
-            onPress: () => setTierFilter('all'),
-            accessibilityLabel: 'Show all evidence tiers',
-          },
-          {
-            id: 'sign-out',
-            icon: {
-              ios: 'rectangle.portrait.and.arrow.right',
-              android: 'logout',
-              web: 'logout',
-            },
-            onPress: () => void signOut(),
-            accessibilityLabel: 'Sign out and switch role',
-          },
-        ]}
+        rightActions={
+          isOfficer
+            ? [
+                {
+                  id: 'reset-tier',
+                  icon: {
+                    ios: 'shield.checkered',
+                    android: 'verified_user',
+                    web: 'verified_user',
+                  },
+                  onPress: () => setTierFilter('all'),
+                  accessibilityLabel: 'Show all evidence tiers',
+                },
+                {
+                  id: 'sign-out',
+                  icon: {
+                    ios: 'rectangle.portrait.and.arrow.right',
+                    android: 'logout',
+                    web: 'logout',
+                  },
+                  onPress: () => void signOut(),
+                  accessibilityLabel: 'Sign out and switch role',
+                },
+              ]
+            : undefined
+        }
       />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        <SegmentedPillBar
-          options={TIER_FILTER_OPTIONS}
-          selectedId={tierFilter}
-          onSelect={setTierFilter}
-        />
+        {isOfficer ? (
+          <>
+            <SegmentedPillBar
+              options={TIER_FILTER_OPTIONS}
+              selectedId={tierFilter}
+              onSelect={setTierFilter}
+            />
 
-        {visiblePassports.map((passport) => {
+            {visiblePassports.map((passport) => {
           const isHypothesis =
             passport.evidenceTier === 'unverified_hypothesis';
           const isDataDerived =
@@ -364,6 +372,8 @@ export default function PassportScreen() {
             </View>
           );
         })}
+          </>
+        ) : null}
 
         <View style={styles.glossaryHeader}>
           <Heading title="Plain-Language Glossary" />

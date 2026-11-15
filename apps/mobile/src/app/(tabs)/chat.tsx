@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
-import React, { useRef, useState, type ComponentRef } from 'react';
+import React, { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -62,14 +63,28 @@ export default function FarmerChatModal() {
 
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [messages, setMessages] = useState<ChatBubble[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Akwaaba! Ask me about ${selectedCell.cellId} (${selectedCell.zoneName}), drought risk, soil fertility, or fertilizer savings — I will run your question through the 2,000-run Monte Carlo & Minimax Regret pipeline.`,
+      content: `Akwaaba! Ask me about ${selectedCell.zoneName} — drought risk, soil cover, crop rotations, or how to save on fertilizer.`,
       modelUsed: 'ScalarField Advisor',
     },
   ]);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const subShow = Keyboard.addListener(showEvent, () => setKeyboardOpen(true));
+    const subHide = Keyboard.addListener(hideEvent, () => setKeyboardOpen(false));
+    return () => {
+      subShow.remove();
+      subHide.remove();
+    };
+  }, []);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -427,7 +442,9 @@ export default function FarmerChatModal() {
         style={{
           paddingHorizontal: 14,
           paddingTop: 10,
-          paddingBottom: Math.max(insets.bottom, 12) + BottomTabInset,
+          paddingBottom: keyboardOpen
+            ? 10
+            : Math.max(insets.bottom, 12) + BottomTabInset,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           backgroundColor: colors.surface,
