@@ -61,9 +61,9 @@ export function Screen({
           <Text
             style={{
               color: colors.foreground,
-              fontFamily: roofiTypography.fontFamily.bodyBold,
+              fontFamily: roofiTypography.fontFamily.body,
               fontSize: 13,
-              fontWeight: '600',
+              fontWeight: '500',
               textAlign: 'center',
             }}>
             Offline mode — viewing cached Ashanti EO telemetry
@@ -287,9 +287,9 @@ export function Tag({
       <Text
         style={{
           color: palette.ink,
-          fontFamily: roofiTypography.fontFamily.bodyBold,
+          fontFamily: roofiTypography.fontFamily.body,
           fontSize: 11,
-          fontWeight: '700',
+          fontWeight: '500',
         }}>
         {children}
       </Text>
@@ -344,10 +344,10 @@ const styles = StyleSheet.create({
   },
   heading: { gap: roofiSpacing[1], marginBottom: roofiSpacing[2] },
   title: {
-    fontFamily: roofiTypography.fontFamily.display,
+    fontFamily: roofiTypography.fontFamily.displayMedium,
     fontSize: roofiTypography.fontSize.screenTitle,
     lineHeight: roofiTypography.lineHeight.screenTitle,
-    fontWeight: '700',
+    fontWeight: '500',
     letterSpacing: -0.35,
     textTransform: 'uppercase',
   },
@@ -358,9 +358,9 @@ const styles = StyleSheet.create({
   },
   field: { gap: 7 },
   label: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: roofiTypography.fontSize.label,
-    fontWeight: '700',
+    fontWeight: '500',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
@@ -382,9 +382,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: roofiSpacing[5],
   },
   buttonText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: roofiTypography.fontSize.button,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   quietButton: {
     minHeight: 44,
@@ -392,9 +392,9 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   quietText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: roofiTypography.fontSize.body,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   card: {
     borderWidth: 1,

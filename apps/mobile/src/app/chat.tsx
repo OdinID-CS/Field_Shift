@@ -157,7 +157,7 @@ export default function FarmerChatModal() {
               numberOfLines={1}
               style={{
                 color: colors.text,
-                fontFamily: roofiTypography.fontFamily.display,
+                fontFamily: roofiTypography.fontFamily.displayMedium,
                 fontSize: 17,
                 letterSpacing: -0.3,
               }}>
@@ -221,7 +221,7 @@ export default function FarmerChatModal() {
               <Text
                 style={{
                   color: colors.text,
-                  fontFamily: roofiTypography.fontFamily.bodyBold,
+                  fontFamily: roofiTypography.fontFamily.body,
                   fontSize: 12,
                 }}>
                 {prompt}
@@ -303,7 +303,7 @@ export default function FarmerChatModal() {
                     <Text
                       style={{
                         color: brandPalette.ultramarineBlue,
-                        fontFamily: roofiTypography.fontFamily.bodyBold,
+                        fontFamily: roofiTypography.fontFamily.body,
                         fontSize: 11,
                         textTransform: 'uppercase',
                         letterSpacing: 0.6,
@@ -313,7 +313,7 @@ export default function FarmerChatModal() {
                     <Text
                       style={{
                         color: colors.success,
-                        fontFamily: roofiTypography.fontFamily.bodyBold,
+                        fontFamily: roofiTypography.fontFamily.body,
                         fontSize: 12,
                       }}>
                       {Math.round(msg.resultCard.topProbabilityFirst * 100)}% Rank-1
@@ -323,7 +323,7 @@ export default function FarmerChatModal() {
                   <Text
                     style={{
                       color: colors.text,
-                      fontFamily: roofiTypography.fontFamily.display,
+                      fontFamily: roofiTypography.fontFamily.displayMedium,
                       fontSize: 15,
                     }}>
                     {msg.resultCard.topStrategyName}
@@ -344,11 +344,11 @@ export default function FarmerChatModal() {
                       gap: 10,
                       paddingTop: 4,
                     }}>
-                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>
+                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '500' }}>
                       MCDA: {msg.resultCard.topBaseScore.toFixed(3)} (+
                       {msg.resultCard.deltaVsBaseline.toFixed(3)})
                     </Text>
-                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>
+                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '500' }}>
                       Urea saved: ~{msg.resultCard.ureaSavingsKgPerHa} kg/ha
                     </Text>
                     <Text style={{ color: colors.textMuted, fontSize: 12 }}>
@@ -381,7 +381,7 @@ export default function FarmerChatModal() {
                     <Text
                       style={{
                         color: '#FFFFFF',
-                        fontFamily: roofiTypography.fontFamily.bodyBold,
+                        fontFamily: roofiTypography.fontFamily.body,
                         fontSize: 12.5,
                       }}>
                       Apply to Compare Studio
