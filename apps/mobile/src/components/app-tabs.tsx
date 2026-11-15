@@ -99,9 +99,6 @@ export function RoofiBottomTabBar({
     return options?.href !== null;
   });
 
-  const leftRoutes = visibleRoutes.slice(0, 2);
-  const rightRoutes = visibleRoutes.slice(2);
-
   const renderTabItem = (route: (typeof state.routes)[number]) => {
     const routeIndex = state.routes.findIndex((r) => r.key === route.key);
     const options = descriptors[route.key]?.options as
@@ -218,10 +215,10 @@ export function RoofiBottomTabBar({
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 10,
-        gap: 8,
+        gap: 6,
         paddingBottom: Math.max(insets.bottom, 12),
       }}>
-      {/* Primary 4-tab pill dock with half-floating center Chat FAB */}
+      {/* Primary 4-tab pill dock */}
       <View
         style={{
           flexDirection: 'row',
@@ -242,42 +239,32 @@ export function RoofiBottomTabBar({
           shadowOffset: { width: 0, height: 4 },
           gap: 2,
         }}>
-        {leftRoutes.map(renderTabItem)}
-        <View
-          style={{
-            width: 52,
-            height: 36,
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-          }}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Open ScalarField AI Advisor Chat"
-            onPress={() => router.push('/chat')}
-            style={({ pressed }) => ({
-              position: 'absolute',
-              top: -26,
-              width: 52,
-              height: 52,
-              borderRadius: 26,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: brandPalette.ultramarineBlue,
-              borderWidth: 3,
-              borderColor: colors.background,
-              elevation: 10,
-              shadowColor: brandPalette.ultramarineBlue,
-              shadowOpacity: 0.35,
-              shadowRadius: 12,
-              shadowOffset: { width: 0, height: 4 },
-              opacity: pressed ? 0.85 : 1,
-            })}>
-            <PlannerIcon name="chat" size={22} color="#FFFFFF" strokeWidth={2} />
-          </Pressable>
-        </View>
-        {rightRoutes.map(renderTabItem)}
+        {visibleRoutes.map(renderTabItem)}
       </View>
+
+      {/* Detached Chat button beside Sync */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open ScalarField AI Advisor Chat"
+        onPress={() => router.push('/chat')}
+        style={({ pressed }) => ({
+          width: 46,
+          height: 46,
+          borderRadius: 23,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: brandPalette.ultramarineBlue,
+          borderWidth: 2,
+          borderColor: isDark ? '#171717' : '#FFFFFF',
+          elevation: 8,
+          shadowColor: brandPalette.ultramarineBlue,
+          shadowOpacity: 0.3,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+          opacity: pressed ? 0.82 : 1,
+        })}>
+        <PlannerIcon name="chat" size={20} color="#FFFFFF" strokeWidth={2} />
+      </Pressable>
 
       {/* Detached right-side Sync extension tab with status fill & queue count badge */}
       <Pressable
@@ -286,9 +273,9 @@ export function RoofiBottomTabBar({
         onPress={() => void handleSyncPress()}
         style={({ pressed }) => ({
           position: 'relative',
-          width: 48,
-          height: 48,
-          borderRadius: 24,
+          width: 46,
+          height: 46,
+          borderRadius: 23,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: syncFillColor,

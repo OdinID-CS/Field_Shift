@@ -67,6 +67,13 @@ Instead of one giant mystery robot brain, Field Shift uses **9 small, honest hel
 | **M8 — Conjugate Bayesian Calibration** | Closed-form Normal-conjugate updates (`officer_reviewed` / `expert_validated` only) | How do real field outcomes safely improve strategy priors without noisy unverified labels? |
 | **M9 — On-Device Plot Vision** | Offline Skia `64×64` RGBA spectral indices (`ExG`, `NGRDI`, residue ratio) | From a phone photo in the field, is the ground `Intact`, `Partial`, or `Bare`? |
 
+#### How Are `M1–M9` Exported & Deployed?
+- **No heavy `.pkl` / `.onnx` server needed:**
+  - **`M1`, `M2`, `M3`, `M4`, `M7`, `M8` (Offline Batch -> JSON + Supabase):** Run offline in Python (`pipeline/src/fieldshift/`), then `publish.py` exports precomputed features, 36-dekad timelines, analog lookups, and Evidence Passports to `pipeline/data/ashanti_pilot_bundle.json` and **Supabase (PostgreSQL + PostGIS)**.
+  - **`M6` (Deterministic Code Parity):** Implemented directly in Python (`pipeline/`, `apps/api/scoring.py`) and TypeScript (`apps/web/src/lib/scoring.ts`, `apps/mobile/src/lib/scoring.ts` & `stress.ts`) with `1e-9` parity tested against `shared/test-vectors/`.
+  - **`M9` (On-Device Mobile Bundle):** Bundled directly inside the mobile app (`apps/mobile/src/lib/vision-classifier.ts`) using **React Native Skia** (`skia-agronomic-v1`) so plot cover scans work offline, with a pluggable `VisionBackendId` for future quantized `.onnx`/`.tflite` weights.
+- **In plain English:** Helpers `1–4, 7, 8` do their homework ahead of time and save the answers in a shared notebook; Helper `6` is instant math built right into the app; and Helper `9` lives inside your phone's camera code so it works in Airplane Mode.
+
 ---
 
 ## Slide 5 — 5 Ways to Take Turns Planting (Rotation Strategies)
