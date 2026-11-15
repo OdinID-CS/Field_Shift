@@ -109,7 +109,9 @@ function CollapsibleChartSection({
         styles.bentoTile,
         CardShadow,
         {
+          width: isFullWidth ? '100%' : undefined,
           flexBasis: isFullWidth ? '100%' : '48%',
+          flexGrow: isFullWidth ? 0 : 1,
           backgroundColor: theme.surface,
           borderColor: isOpen ? accentColor : theme.border,
           borderWidth: isOpen ? 1.5 : 1,
