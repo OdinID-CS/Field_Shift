@@ -6,6 +6,41 @@
     {
       "layers" : [
         {
+          "image-name" : "Image.png",
+          "name" : "Image",
+          "position" : {
+            "scale" : 5,
+            "translation-in-points" : [
+              27.70458984375,
+              901.6476440429688
+            ]
+          }
+        },
+        {
+          "image-name" : "Image 2.png",
+          "name" : "Image 2",
+          "position" : {
+            "scale" : 5,
+            "translation-in-points" : [
+              -18.2528076171875,
+              685.4598388671875
+            ]
+          }
+        },
+        {
+          "blend-mode" : "overlay",
+          "image-name" : "Image 3.png",
+          "name" : "Image 3",
+          "position" : {
+            "scale" : 5,
+            "translation-in-points" : [
+              -23.1116943359375,
+              467.56329345703125
+            ]
+          }
+        },
+        {
+          "hidden" : true,
           "image-name" : "expo-symbol 2.svg",
           "name" : "expo-symbol 2",
           "position" : {
@@ -17,6 +52,7 @@
           }
         },
         {
+          "hidden" : false,
           "image-name" : "grid.png",
           "name" : "grid"
         }
