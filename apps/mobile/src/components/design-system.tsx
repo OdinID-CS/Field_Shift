@@ -29,12 +29,14 @@ export function TopSearchRegionHeader({
   searchPlaceholder = 'Search region or cell',
   regionCaption = 'Region',
   regionName,
+  showSearch = true,
 }: {
   searchQuery: string;
   onChangeSearch: (text: string) => void;
   searchPlaceholder?: string;
   regionCaption?: string;
   regionName: string;
+  showSearch?: boolean;
 }) {
   const theme = useTheme();
 
@@ -84,31 +86,33 @@ export function TopSearchRegionHeader({
         </View>
       </View>
 
-      <View
-        style={[
-          styles.searchPill,
-          {
-            backgroundColor: theme.surfaceSubtle,
-            borderColor: theme.border,
-          },
-        ]}>
-        <PlannerIcon name="search" size={17} color={theme.secondary} />
-        <TextInput
-          value={searchQuery}
-          onChangeText={onChangeSearch}
-          placeholder={searchPlaceholder}
-          placeholderTextColor={theme.secondary}
-          selectionColor={theme.primary}
+      {showSearch && (
+        <View
           style={[
-            styles.searchInput,
+            styles.searchPill,
             {
-              color: theme.foreground,
-              fontFamily: roofiTypography.fontFamily.body,
+              backgroundColor: theme.surfaceSubtle,
+              borderColor: theme.border,
             },
-          ]}
-          clearButtonMode="while-editing"
-        />
-      </View>
+          ]}>
+          <PlannerIcon name="search" size={17} color={theme.secondary} />
+          <TextInput
+            value={searchQuery}
+            onChangeText={onChangeSearch}
+            placeholder={searchPlaceholder}
+            placeholderTextColor={theme.secondary}
+            selectionColor={theme.primary}
+            style={[
+              styles.searchInput,
+              {
+                color: theme.foreground,
+                fontFamily: roofiTypography.fontFamily.body,
+              },
+            ]}
+            clearButtonMode="while-editing"
+          />
+        </View>
+      )}
     </View>
   );
 }

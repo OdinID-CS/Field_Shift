@@ -19,6 +19,7 @@ import {
   roofiSpacing,
   roofiTypography,
 } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
 import { usePilotState } from '@/hooks/use-pilot-state';
 import { useTheme } from '@/hooks/use-theme';
 import { toast } from '@/lib/toast';
@@ -78,6 +79,9 @@ const CELL_METRICS: Record<
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const { session } = useAuth();
+  const isOfficer =
+    session?.role === 'extension_officer' || session?.role === 'agronomist';
   const {
     cells,
     selectedCell,
@@ -127,6 +131,7 @@ export default function HomeScreen() {
         searchPlaceholder="Search soil, district, or cell"
         regionCaption="Ashanti Region"
         regionName="Ghana"
+        showSearch={isOfficer}
       />
 
       <ScrollView
@@ -202,13 +207,13 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        <SmartInsightCard
+        {/* <SmartInsightCard
           icon={{ ios: 'leaf', android: 'eco', web: 'eco' }}
           category="THIS WEEK ON YOUR FARM"
           headline={kpis.insight}
           footer={`${selectedCell.zoneName} · Major & Minor Rain Windows`}
           tone="green"
-        />
+        /> */}
 
         <View style={styles.kpiGrid}>
           <View style={styles.kpiRow}>

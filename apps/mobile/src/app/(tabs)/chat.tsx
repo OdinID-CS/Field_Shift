@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
   ActivityIndicator,
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ChatWidgetRenderer } from '@/components/chat-widgets';
 import { PlannerIcon } from '@/components/icons';
 import {
   BottomTabInset,
@@ -23,10 +23,18 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { usePilotState } from '@/hooks/use-pilot-state';
 import {
+  buildSmsWidgetForStrategy,
+  computeCompareRows,
+  resolveLocalChatCommand,
+  type ChatWidget,
+} from '@/lib/chat-actions';
+import {
   sendFarmerChatMessage,
   type ChatHistoryTurn,
   type ChatResultCard,
+  type PriorityWeightsTuple,
 } from '@/lib/chat-api';
+import { type ClimateStressId } from '@/lib/stress';
 import { toast } from '@/lib/toast';
 import { useTheme } from '@/theme/useTheme';
 
@@ -37,38 +45,49 @@ interface ChatBubble {
   modelUsed?: string;
   pipelineSource?: string;
   resultCard?: ChatResultCard | null;
+  widget?: ChatWidget | null;
 }
 
 const QUICK_PROMPTS = [
   'Best rotation for my cell',
+  'Compare options',
+  'Planting dates',
+  'Switch zone / farm size',
   'Test severe drought risk',
-  'Cut urea fertilizer cost',
   'Explain in Twi',
 ];
 
 export default function FarmerChatModal() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, scheme } = useTheme();
-  const isDark = scheme === 'dark';
+  const { colors } = useTheme();
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const {
     selectedCell,
     weights,
     farmAreaHa,
+    strategies,
     selectCell,
+    setFarmAreaHa,
     applyPreset,
+    logFarmerDecision,
   } = usePilotState();
 
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [expandedThinkingIds, setExpandedThinkingIds] = useState<
+    Record<string, boolean>
+  >({});
+
+  const toggleThinking = (id: string) => {
+    setExpandedThinkingIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
   const [messages, setMessages] = useState<ChatBubble[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Akwaaba! Ask me about ${selectedCell.zoneName} — drought risk, soil cover, crop rotations, or how to save on fertilizer.`,
+      content: `Akwaaba! Ask me about ${selectedCell.zoneName}, or tap an option below to compare crops, check planting dates, or switch your zone.`,
       modelUsed: 'ScalarField Advisor',
     },
   ]);
@@ -92,6 +111,18 @@ export default function FarmerChatModal() {
     }, 60);
   };
 
+  const appendAssistantBubble = (bubble: Omit<ChatBubble, 'id' | 'role'>) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `a-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        role: 'assistant',
+        ...bubble,
+      },
+    ]);
+    scrollToBottom();
+  };
+
   const handleSend = async (rawText?: string) => {
     const text = (rawText ?? input).trim();
     if (!text || sending) return;
@@ -107,9 +138,24 @@ export default function FarmerChatModal() {
 
     setMessages((prev) => [...prev, userMsg]);
     if (!rawText) setInput('');
-    setSending(true);
     scrollToBottom();
 
+    const localCmd = resolveLocalChatCommand({
+      message: text,
+      cellId: selectedCell.cellId,
+      weights,
+      farmAreaHa,
+      strategies,
+    });
+    if (localCmd) {
+      appendAssistantBubble({
+        content: localCmd.reply,
+        widget: localCmd.widget,
+      });
+      return;
+    }
+
+    setSending(true);
     const response = await sendFarmerChatMessage({
       message: text,
       history,
@@ -118,32 +164,117 @@ export default function FarmerChatModal() {
       farmAreaHa,
     });
 
-    const assistantMsg: ChatBubble = {
-      id: `a-${Date.now()}`,
-      role: 'assistant',
+    appendAssistantBubble({
       content: response.reply,
       modelUsed: response.modelUsed,
       pipelineSource: response.pipelineSource,
       resultCard: response.resultCard,
-    };
-
-    setMessages((prev) => [...prev, assistantMsg]);
+    });
     setSending(false);
-    scrollToBottom();
   };
 
   const { session } = useAuth();
   const isOfficer =
     session?.role === 'extension_officer' || session?.role === 'agronomist';
 
-  const handleApplyToCompare = (card: ChatResultCard) => {
+  const handleOpenCompareInChat = (card: ChatResultCard) => {
     selectCell(card.cellId);
     applyPreset(card.weights);
+    appendAssistantBubble({
+      content: `Compare plans for ${card.regionName} below and tap Choose on the one you want.`,
+      widget: {
+        type: 'compare',
+        cellId: card.cellId,
+        stressId: card.stressId,
+        weights: card.weights,
+        selectedStrategyCode: card.topStrategyCode,
+      },
+    });
+  };
+
+  const handleOpenCalendarInChat = () => {
+    appendAssistantBubble({
+      content: `Planting windows for ${selectedCell.zoneName}:`,
+      widget: {
+        type: 'calendar',
+        cellId: selectedCell.cellId,
+        zoneName: selectedCell.zoneName,
+        focus: 'planting',
+      },
+    });
+  };
+
+  const handleChooseStrategyInChat = async (params: {
+    strategyCode?: string;
+    strategyName?: string;
+    weights: PriorityWeightsTuple;
+    stressId: ClimateStressId;
+    baseScores: Record<string, number>;
+    rankProbabilities: Record<string, number>;
+  }) => {
+    const strategy =
+      strategies.find((s) => s.code === params.strategyCode) ?? strategies[0];
+    applyPreset(params.weights);
+
+    const res = await logFarmerDecision({
+      selectedStrategyCode: strategy.code,
+      computedBaseScores: params.baseScores,
+      rankProbabilities: params.rankProbabilities,
+      reasoningNotes: `Chosen in chat (${params.stressId})`,
+    });
+
+    const status = res.status === 'submitted' ? 'synced' : 'queued';
     toast.success(
-      'Applied to Compare',
-      `${card.cellId} · ${card.topStrategyName}`,
+      status === 'synced' ? 'Plan Saved' : 'Saved Offline',
+      `${selectedCell.cellId} · ${strategy.name}`,
     );
-    router.push('/compare');
+
+    appendAssistantBubble({
+      content: `Saved ${strategy.name} for ${selectedCell.zoneName}.`,
+      widget: {
+        type: 'decision_saved',
+        cellId: selectedCell.cellId,
+        strategyCode: strategy.code,
+        strategyName: strategy.name,
+        status,
+        detail:
+          status === 'synced'
+            ? 'Synced to your farm log.'
+            : 'Saved on this phone and will sync when online.',
+      },
+    });
+  };
+
+  const handleSaveResultCard = (card: ChatResultCard) => {
+    selectCell(card.cellId);
+    const { baseScoreMap, rankProbMap } = computeCompareRows(
+      strategies,
+      card.weights,
+      card.stressId,
+    );
+    void handleChooseStrategyInChat({
+      strategyCode: card.topStrategyCode,
+      strategyName: card.topStrategyName,
+      weights: card.weights,
+      stressId: card.stressId,
+      baseScores: baseScoreMap,
+      rankProbabilities: rankProbMap,
+    });
+  };
+
+  const handleOpenSmsInChat = (strategyCode?: string) => {
+    const strategy =
+      strategies.find((s) => s.code === strategyCode) ?? strategies[0];
+    appendAssistantBubble({
+      content: `Ready to share ${strategy.name} in English and Twi.`,
+      widget: buildSmsWidgetForStrategy({
+        cellId: selectedCell.cellId,
+        strategy,
+        weights,
+        stressId: 'baseline',
+        strategies,
+      }),
+    });
   };
 
   return (
@@ -250,6 +381,9 @@ export default function FarmerChatModal() {
         keyboardShouldPersistTaps="handled">
         {messages.map((msg) => {
           const isUser = msg.role === 'user';
+          const hasResultCard = !isUser && Boolean(msg.resultCard);
+          const isThinkingOpen = Boolean(expandedThinkingIds[msg.id]);
+
           return (
             <View
               key={msg.id}
@@ -258,41 +392,75 @@ export default function FarmerChatModal() {
                 maxWidth: '88%',
                 gap: 8,
               }}>
-              <View
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 11,
-                  borderRadius: 18,
-                  borderBottomRightRadius: isUser ? 4 : 18,
-                  borderBottomLeftRadius: isUser ? 18 : 4,
-                  backgroundColor: isUser
-                    ? brandPalette.ultramarineBlue
-                    : colors.surface,
-                  borderWidth: isUser ? 0 : 1,
-                  borderColor: colors.border,
-                }}>
-                <Text
-                  style={{
-                    color: isUser ? '#FFFFFF' : colors.text,
-                    fontFamily: roofiTypography.fontFamily.body,
-                    fontSize: 14.5,
-                    lineHeight: 20,
-                  }}>
-                  {msg.content}
-                </Text>
-                {!isUser && msg.modelUsed && (
+              {hasResultCard && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: isThinkingOpen }}
+                  onPress={() => toggleThinking(msg.id)}
+                  style={({ pressed }) => ({
+                    alignSelf: 'flex-start',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    paddingVertical: 2,
+                    paddingHorizontal: 2,
+                    opacity: pressed ? 0.6 : 1,
+                  })}>
                   <Text
                     style={{
-                      marginTop: 6,
                       color: colors.textMuted,
                       fontFamily: roofiTypography.fontFamily.body,
-                      fontSize: 10.5,
+                      fontSize: 11,
                     }}>
-                    {msg.modelUsed}
-                    {msg.pipelineSource ? ` · ${msg.pipelineSource}` : ''}
+                    {isThinkingOpen
+                      ? 'Hide thinking'
+                      : 'Thinking / Calculating...'}
                   </Text>
-                )}
-              </View>
+                  <PlannerIcon
+                    name="chevron"
+                    size={11}
+                    color={colors.textMuted}
+                  />
+                </Pressable>
+              )}
+
+              {(!hasResultCard || isThinkingOpen) && (
+                <View
+                  style={{
+                    paddingHorizontal: 14,
+                    paddingVertical: 11,
+                    borderRadius: 18,
+                    borderBottomRightRadius: isUser ? 4 : 18,
+                    borderBottomLeftRadius: isUser ? 18 : 4,
+                    backgroundColor: isUser
+                      ? brandPalette.ultramarineBlue
+                      : colors.surface,
+                    borderWidth: isUser ? 0 : 1,
+                    borderColor: colors.border,
+                  }}>
+                  <Text
+                    style={{
+                      color: isUser ? '#FFFFFF' : colors.text,
+                      fontFamily: roofiTypography.fontFamily.body,
+                      fontSize: 14.5,
+                      lineHeight: 20,
+                    }}>
+                    {msg.content}
+                  </Text>
+                  {!isUser && msg.modelUsed && (
+                    <Text
+                      style={{
+                        marginTop: 6,
+                        color: colors.textMuted,
+                        fontFamily: roofiTypography.fontFamily.body,
+                        fontSize: 10.5,
+                      }}>
+                      {msg.modelUsed}
+                      {msg.pipelineSource ? ` · ${msg.pipelineSource}` : ''}
+                    </Text>
+                  )}
+                </View>
+              )}
 
               {msg.resultCard && (
                 <View
@@ -383,28 +551,114 @@ export default function FarmerChatModal() {
                     </Text>
                   ) : null}
 
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => handleApplyToCompare(msg.resultCard!)}
-                    style={({ pressed }) => ({
-                      marginTop: 4,
-                      paddingVertical: 9,
-                      paddingHorizontal: 14,
-                      borderRadius: roofiRadii.pill,
-                      backgroundColor: brandPalette.chineseBlack,
-                      alignItems: 'center',
-                      opacity: pressed ? 0.8 : 1,
-                    })}>
-                    <Text
-                      style={{
-                        color: '#FFFFFF',
-                        fontFamily: roofiTypography.fontFamily.body,
-                        fontSize: 12.5,
-                      }}>
-                      Apply to Compare Studio
-                    </Text>
-                  </Pressable>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => handleSaveResultCard(msg.resultCard!)}
+                      style={({ pressed }) => ({
+                        flex: 1,
+                        minWidth: 110,
+                        paddingVertical: 9,
+                        paddingHorizontal: 12,
+                        borderRadius: roofiRadii.pill,
+                        backgroundColor: brandPalette.chineseBlack,
+                        alignItems: 'center',
+                        opacity: pressed ? 0.8 : 1,
+                      })}>
+                      <Text
+                        style={{
+                          color: '#FFFFFF',
+                          fontFamily: roofiTypography.fontFamily.body,
+                          fontSize: 12,
+                        }}>
+                        Choose & Save
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => handleOpenCompareInChat(msg.resultCard!)}
+                      style={({ pressed }) => ({
+                        flex: 1,
+                        minWidth: 110,
+                        paddingVertical: 9,
+                        paddingHorizontal: 12,
+                        borderRadius: roofiRadii.pill,
+                        backgroundColor: colors.background,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        alignItems: 'center',
+                        opacity: pressed ? 0.75 : 1,
+                      })}>
+                      <Text
+                        style={{
+                          color: colors.text,
+                          fontFamily: roofiTypography.fontFamily.body,
+                          fontSize: 12,
+                        }}>
+                        Compare options
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={handleOpenCalendarInChat}
+                      style={({ pressed }) => ({
+                        paddingVertical: 9,
+                        paddingHorizontal: 12,
+                        borderRadius: roofiRadii.pill,
+                        backgroundColor: colors.background,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        alignItems: 'center',
+                        opacity: pressed ? 0.75 : 1,
+                      })}>
+                      <Text
+                        style={{
+                          color: colors.text,
+                          fontFamily: roofiTypography.fontFamily.body,
+                          fontSize: 12,
+                        }}>
+                        Planting dates
+                      </Text>
+                    </Pressable>
+                  </View>
                 </View>
+              )}
+
+              {msg.widget && (
+                <ChatWidgetRenderer
+                  widget={msg.widget}
+                  strategies={strategies}
+                  isOfficer={isOfficer}
+                  onChooseStrategy={({
+                    strategy,
+                    weights: nextWeights,
+                    stressId,
+                    baseScores: scoreMap,
+                    rankProbabilities: probMap,
+                  }) =>
+                    void handleChooseStrategyInChat({
+                      strategyCode: strategy.code,
+                      strategyName: strategy.name,
+                      weights: nextWeights,
+                      stressId,
+                      baseScores: scoreMap,
+                      rankProbabilities: probMap,
+                    })
+                  }
+                  onSelectZone={(cellId) => {
+                    selectCell(cellId);
+                    toast.info('Zone updated', cellId);
+                  }}
+                  onSelectArea={(areaHa) => {
+                    setFarmAreaHa(areaHa);
+                    toast.info('Farm size updated', `${areaHa} ha`);
+                  }}
+                  onRunPrompt={(prompt) => void handleSend(prompt)}
+                  onOpenCalendar={handleOpenCalendarInChat}
+                  onOpenSmsShare={handleOpenSmsInChat}
+                />
               )}
             </View>
           );
