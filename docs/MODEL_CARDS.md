@@ -39,3 +39,17 @@ Structured documentation for the Ashanti Pilot Earth Observation & Decision Inte
 - **Method:** 100% offline Skia offscreen `64×64` RGBA readback (`classifyPlotImageUri`) + spectral-index classification (`classifyRgbaPatch`) using Excess Green (`ExG = 2g - r - b`), Normalized Green-Red Difference (`NGRDI`), and brightness/redness residue separation behind a pluggable `VisionBackendId` (`skia-agronomic-v1`, ready for quantized ONNX/TFLite).
 - **Outputs:** Auto-populates `soilCover` (`Intact` / `Partial` / `Bare`), `waterStressHint` (`None` / `Mild` / `Severe`), `canopyPct`, `mulchPct`, `barePct`, and `confidence` on mobile Field Outcome Reports.
 - **Known Limitations:** Spectral color indices can be affected by harsh noon shadows or wet dark soils; farmers and extension officers can always override the suggested pills before submitting.
+
+---
+
+## Validation, Stability & Uncertainty Metrics (`models/validation.py`)
+
+Measured across the 5 Ashanti pilot cells × 4 years (`2022–2025`, `n_pairs = 720` dekad pairs):
+
+| Check | Observed Outcome | What It Proves & Honest Caveats |
+| :--- | :--- | :--- |
+| **M2 Bootstrap Cluster Stability** (`n_bootstrap = 25`) | `mean_stability = 0.9579` (`95.8%`) | **Strong:** Hydrological regime assignments (`dry_stressed`, `moderate_variable`, `wet_vigorous`) remain highly consistent under resampling. |
+| **M1 & M2 Leave-One-Year-Out** (`years_tested = 4`) | `mean_anomaly_score_shift = 0.1463`, `cluster_label_agreement = 0.7222` (`72.2%`) | **Reasonable for a 4-year window:** Shows expected sensitivity when 1 of 4 years is held out, reinforcing why M4 reports `p_value` and M7 requires local expert review rather than claiming multi-decadal attribution. |
+| **Cross-Source Rainfall Agreement** (`evaluate_rainfall_source_agreement`) | `pearson_r = 0.9919`, `mae_mm = 3.7`, `bias_pct = 0.98%` | **Pipeline verification caveat:** On the synthetic pilot generator (`generate_ashanti_pilot_raw_daily`), IMERG and ERA5 share a base signal, so `0.99` verifies QC/harmonization rather than live Ghana satellite agreement (live IMERG vs. ERA5 agreement is naturally lower). |
+| **M6 Cross-Language Parity & Robustness** | `1e-9` base-score & `2e-4` stress-test parity; `2,000`-run Monte Carlo rank stability + Minimax Regret | **Strong:** Python (`pipeline/`, `apps/api`), Web (`apps/web`), and Mobile (`apps/mobile`) compute identical scores offline and online, and surface rank uncertainty instead of hiding behind a single point estimate. |
+| **Supervised Yield Accuracy** | *Not claimed* | **Intentional gap:** No farm-level harvest RMSE/F1 is claimed without verified Ashanti yield labels—**M7** (Evidence Passports) and **M8** (officer-gated Bayesian calibration) exist specifically to bridge this safely. |
