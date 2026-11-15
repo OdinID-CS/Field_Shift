@@ -42,7 +42,7 @@ async function callOpenRouter(params: {
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "https://fieldshift.vercel.app",
+          "HTTP-Referer": "https://scalarfield.vercel.app",
           "X-Title": "ScalarField Farmer Advisor",
         },
         body: JSON.stringify({

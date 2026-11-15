@@ -9,7 +9,7 @@ import {
   type MinimaxRegretSummary,
 } from '@/lib/stress';
 
-export const DEFAULT_VERCEL_API_URL = 'https://fieldshift.vercel.app';
+export const DEFAULT_VERCEL_API_URL = 'https://scalarfield.vercel.app';
 
 export function getDecisionApiBaseUrl(): string {
   const configured = process.env.EXPO_PUBLIC_API_URL?.trim();
@@ -41,7 +41,7 @@ interface FastApiStressTestResponse {
 
 /**
  * Queries the live Vercel FastAPI decision service (`POST /api/stress-test`)
- * at `https://fieldshift.vercel.app/api/stress-test`.
+ * at `https://scalarfield.vercel.app/api/stress-test`.
  * Returns `null` if offline so the caller falls back seamlessly to local compute.
  */
 export async function fetchRemoteStressTest(params: {
