@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
@@ -32,6 +33,7 @@ import {
   roofiSpacing,
   roofiTypography,
 } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
 import { usePilotState } from '@/hooks/use-pilot-state';
 import { useTheme } from '@/hooks/use-theme';
 import { toast } from '@/lib/toast';
@@ -187,7 +189,11 @@ function CollapsibleChartSection({
 }
 
 export default function CalendarScreen() {
+  const router = useRouter();
   const theme = useTheme();
+  const { session } = useAuth();
+  const isOfficer =
+    session?.role === 'extension_officer' || session?.role === 'agronomist';
   const { cells, selectedCell, selectCell } = usePilotState();
   const [filter, setFilter] = useState<CalendarFilter>('all');
   const [openCharts, setOpenCharts] = useState<Record<ChartSectionKey, boolean>>({
@@ -207,10 +213,7 @@ export default function CalendarScreen() {
     const idx = cells.findIndex((c) => c.cellId === selectedCell.cellId);
     const next = cells[(idx + 1) % cells.length];
     selectCell(next.cellId);
-    toast.info(
-      `Cell ${next.cellId}`,
-      `${next.zoneName} · 36-dekad vulnerability calendar`,
-    );
+    toast.info(`Plot: ${next.zoneName.split(' ')[0]}`);
   };
 
   const handleFilterSelect = (nextFilter: CalendarFilter) => {
@@ -265,14 +268,14 @@ export default function CalendarScreen() {
         title={selectedCell.zoneName.split(' ')[0]}
         subtitle={`${selectedCell.soilTexture} · ${selectedCell.cellId}`}
         leftAction={{
-          id: 'cycle-cell',
+          id: 'back-tools',
           icon: {
             ios: 'chevron.left',
             android: 'arrow_back',
             web: 'arrow_back',
           },
-          onPress: cycleCell,
-          accessibilityLabel: 'Switch pilot cell',
+          onPress: () => router.back(),
+          accessibilityLabel: 'Back to Tools',
         }}
         rightActions={[
           {
@@ -316,20 +319,22 @@ export default function CalendarScreen() {
           metaRight="36-DEKAD BASELINE"
         />
 
-        <View style={styles.sectionRow}>
-          <Heading title="Climate & Canopy Charts" />
-          <View
-            style={[
-              styles.countBadge,
-              { backgroundColor: theme.surfaceSubtle },
-            ]}>
-            <ThemedText type="code" themeColor="secondary">
-              TAP TO EXPAND
-            </ThemedText>
-          </View>
-        </View>
+        {isOfficer ? (
+          <>
+            <View style={styles.sectionRow}>
+              <Heading title="Climate & Canopy Charts" />
+              <View
+                style={[
+                  styles.countBadge,
+                  { backgroundColor: theme.surfaceSubtle },
+                ]}>
+                <ThemedText type="code" themeColor="secondary">
+                  TAP TO EXPAND
+                </ThemedText>
+              </View>
+            </View>
 
-        <View style={styles.bentoGrid}>
+            <View style={styles.bentoGrid}>
           <CollapsibleChartSection
             title="Vegetation Cover & Moisture"
             metricValue="46% AVG"
@@ -432,6 +437,8 @@ export default function CalendarScreen() {
           </CollapsibleChartSection>
         </View>
           </>
+        ) : null}
+          </>
         ) : (
           <>
             <View style={styles.sectionRow}>
@@ -442,7 +449,7 @@ export default function CalendarScreen() {
                   { backgroundColor: theme.surfaceSubtle },
                 ]}>
                 <ThemedText type="code" themeColor="secondary">
-                  {filteredWindows.length} · NDVI &lt; 0.28 BARE
+                  {filteredWindows.length} · {isOfficer ? 'NDVI < 0.28 BARE' : 'Bare Soil Risk'}
                 </ThemedText>
               </View>
             </View>
@@ -514,8 +521,15 @@ export default function CalendarScreen() {
                   { backgroundColor: theme.surfaceSubtle },
                 ]}>
                 <ThemedText type="code" themeColor="secondary">
-                  SMAP z={win.smapAnomalyZ >= 0 ? '+' : ''}
-                  {win.smapAnomalyZ.toFixed(2)}
+                  {isOfficer
+                    ? `SMAP z=${win.smapAnomalyZ >= 0 ? '+' : ''}${win.smapAnomalyZ.toFixed(2)}`
+                    : win.smapAnomalyZ < -0.8
+                      ? 'Soil: Very Dry'
+                      : win.smapAnomalyZ < 0
+                        ? 'Soil: Dry'
+                        : win.smapAnomalyZ > 0.6
+                          ? 'Soil: Wet'
+                          : 'Soil: Moist'}
                 </ThemedText>
               </View>
               <View
@@ -524,7 +538,9 @@ export default function CalendarScreen() {
                   { backgroundColor: theme.sage.surface },
                 ]}>
                 <ThemedText type="code" style={{ color: theme.sage.ink }}>
-                  NDVI {win.ndviSmooth.toFixed(2)}
+                  {isOfficer
+                    ? `NDVI ${win.ndviSmooth.toFixed(2)}`
+                    : `Cover ${Math.round(win.ndviSmooth * 100)}%`}
                 </ThemedText>
               </View>
             </View>

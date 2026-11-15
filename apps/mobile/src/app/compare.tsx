@@ -1,4 +1,5 @@
 import Slider from '@react-native-community/slider';
+import { useRouter } from 'expo-router';
 import { Layers, ShieldCheck, Sprout } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -24,6 +25,7 @@ import {
   roofiRadii,
   roofiSpacing,
 } from '@/constants/theme';
+import { useAuth } from '@/hooks/use-auth';
 import { usePilotState } from '@/hooks/use-pilot-state';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -59,7 +61,11 @@ const VIEW_MODE_OPTIONS = [
 ] as const;
 
 export default function CompareScreen() {
+  const router = useRouter();
   const theme = useTheme();
+  const { session } = useAuth();
+  const isOfficer =
+    session?.role === 'extension_officer' || session?.role === 'agronomist';
   const {
     selectedCell,
     weights,
@@ -201,15 +207,9 @@ export default function CompareScreen() {
       reasoningNotes: `Selected under ${activeScenario.shortLabel} preset`,
     });
     if (res.status === 'submitted') {
-      toast.success(
-        `Logged ${strategyName}`,
-        'Saved to Supabase farmer decision log.',
-      );
+      toast.success('Plan saved', strategyName);
     } else {
-      toast.warning(
-        `Saved ${strategyName} offline`,
-        `${res.queuedCount} decision(s) queued to sync when online.`,
-      );
+      toast.warning('Saved offline', 'Will sync when online.');
     }
   };
 
@@ -220,30 +220,44 @@ export default function CompareScreen() {
       <TopBarHeader
         title={`Strategies (${strategies.length})`}
         subtitle={`${selectedCell.cellId} · ${sourceBadge} · ${activeScenario.shortLabel}`}
-        rightActions={[
-          {
-            id: 'preset-filter',
-            icon: {
-              ios: 'slider.horizontal.3',
-              android: 'tune',
-              web: 'tune',
-            },
-            badgeDot: true,
-            onPress: () => setShowPriorityEditor((v) => !v),
-            accessibilityLabel: 'Toggle priority weight sliders',
+        leftAction={{
+          id: 'back-tools',
+          icon: {
+            ios: 'chevron.left',
+            android: 'arrow_back',
+            web: 'arrow_back',
           },
-          {
-            id: 'add-adjust',
-            icon: {
-              ios: 'plus',
-              android: 'add',
-              web: 'add',
-            },
-            variant: 'primary',
-            onPress: () => setShowPriorityEditor((v) => !v),
-            accessibilityLabel: 'Adjust farmer priorities',
-          },
-        ]}
+          onPress: () => router.back(),
+          accessibilityLabel: 'Back to Tools',
+        }}
+        rightActions={
+          isOfficer
+            ? [
+                {
+                  id: 'preset-filter',
+                  icon: {
+                    ios: 'slider.horizontal.3',
+                    android: 'tune',
+                    web: 'tune',
+                  },
+                  badgeDot: true,
+                  onPress: () => setShowPriorityEditor((v) => !v),
+                  accessibilityLabel: 'Toggle priority weight sliders',
+                },
+                {
+                  id: 'add-adjust',
+                  icon: {
+                    ios: 'plus',
+                    android: 'add',
+                    web: 'add',
+                  },
+                  variant: 'primary',
+                  onPress: () => setShowPriorityEditor((v) => !v),
+                  accessibilityLabel: 'Adjust farmer priorities',
+                },
+              ]
+            : undefined
+        }
       />
 
       <ScrollView
@@ -288,13 +302,15 @@ export default function CompareScreen() {
           )}
         </View>
 
-        <SegmentedPillBar
-          options={VIEW_MODE_OPTIONS}
-          selectedId={viewMode}
-          onSelect={(id) => setViewMode(id as 'cards' | 'matrix')}
-        />
+        {isOfficer ? (
+          <SegmentedPillBar
+            options={VIEW_MODE_OPTIONS}
+            selectedId={viewMode}
+            onSelect={(id) => setViewMode(id as 'cards' | 'matrix')}
+          />
+        ) : null}
 
-        {showPriorityEditor && (
+        {isOfficer && showPriorityEditor && (
           <View
             style={[
               styles.editorCard,
@@ -479,7 +495,9 @@ export default function CompareScreen() {
                       </ThemedText>
                     </View>
                     <ThemedText type="small" themeColor="mutedText">
-                      Mean rank {stability.meanRank[sIdx].toFixed(2)}
+                      {isOfficer
+                        ? `Mean rank ${stability.meanRank[sIdx].toFixed(2)}`
+                        : 'High consistency'}
                       {stressId !== 'baseline'
                         ? ` · ${deltaPct >= 0 ? `+${deltaPct}` : deltaPct}% vs base`
                         : ''}
@@ -501,10 +519,9 @@ export default function CompareScreen() {
                         <ThemedText
                           type="code"
                           style={{ color: theme.sage.ink }}>
-                          Lowest-Regret Safe Pick
-                          {regretRow
-                            ? ` (gap ${(regretRow.maxRegret * 100).toFixed(0)}%)`
-                            : ''}
+                          {isOfficer
+                            ? `Lowest-Regret Pick${regretRow ? ` (gap ${(regretRow.maxRegret * 100).toFixed(0)}%)` : ''}`
+                            : 'Safest in Hard Weather'}
                         </ThemedText>
                       </View>
                     )}
@@ -530,7 +547,7 @@ export default function CompareScreen() {
                         <ThemedText
                           type="code"
                           style={{ color: theme.personal.ink }}>
-                          -{nOffset.bareDaysAvoided} Harmattan bare d
+                          -{nOffset.bareDaysAvoided} bare soil days
                         </ThemedText>
                       </View>
                     )}

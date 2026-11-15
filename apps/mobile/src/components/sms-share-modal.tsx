@@ -47,17 +47,14 @@ export function SmsShareModal({
   const handleCopy = async () => {
     await Clipboard.setStringAsync(message);
     setCopied(true);
-    toast.success(
-      'Copied bilingual SMS card',
-      `${charCount} chars (${segments} SMS ${segments === 1 ? 'part' : 'parts'}) copied to clipboard.`,
-    );
+    toast.success('Copied to clipboard');
   };
 
   const handleNativeShare = async () => {
     try {
       await Share.share({ message });
     } catch {
-      toast.error('Could not open share sheet');
+      toast.error('Could not open share');
     }
   };
 
