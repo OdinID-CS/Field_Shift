@@ -140,9 +140,8 @@ export function DekadHeatmapMatrix({
                   styles.monthCaption,
                   {
                     color: active ? theme.foreground : theme.mutedText,
-                    fontFamily: active
-                      ? roofiTypography.fontFamily.bodyBold
-                      : roofiTypography.fontFamily.body,
+                    fontFamily: roofiTypography.fontFamily.body,
+                    fontWeight: active ? '500' : '400',
                   },
                 ]}>
                 {item.window.monthLabel}
@@ -193,19 +192,19 @@ export function DekadHeatmapMatrix({
           <View
             style={[styles.swatch, { backgroundColor: theme.sage.edge }]}
           />
-          <ThemedText type="code" themeColor="secondary">
+          <ThemedText type="small" themeColor="secondary" style={styles.regularText}>
             Cover OK
           </ThemedText>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.swatch, { backgroundColor: theme.gold.ink }]} />
-          <ThemedText type="code" themeColor="secondary">
+          <ThemedText type="small" themeColor="secondary" style={styles.regularText}>
             Bare risk
           </ThemedText>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.swatch, { backgroundColor: theme.primary }]} />
-          <ThemedText type="code" themeColor="secondary">
+          <ThemedText type="small" themeColor="secondary" style={styles.regularText}>
             Cloud QA
           </ThemedText>
         </View>
@@ -228,17 +227,20 @@ export function DekadHeatmapMatrix({
               ) : (
                 <CloudRain size={15} color={theme.sage.ink} />
               )}
-              <ThemedText type="smallBold">
+              <ThemedText type="small" style={styles.mediumText}>
                 {selectedDekad.code} · {selectedDekad.window.seasonLabel}
               </ThemedText>
             </View>
             <ThemedText
-              type="code"
-              style={{
-                color: selectedDekad.window.bareFieldRisk
-                  ? theme.gold.ink
-                  : theme.sage.ink,
-              }}>
+              type="small"
+              style={[
+                styles.regularText,
+                {
+                  color: selectedDekad.window.bareFieldRisk
+                    ? theme.gold.ink
+                    : theme.sage.ink,
+                },
+              ]}>
               NDVI {selectedDekad.window.ndviSmooth.toFixed(2)} ·{' '}
               {selectedDekad.window.rainMm} mm
             </ThemedText>
@@ -275,7 +277,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   monthDisplayTitle: {
-    fontFamily: roofiTypography.fontFamily.display,
+    fontFamily: roofiTypography.fontFamily.displayMedium,
+    fontWeight: '500',
     fontSize: roofiTypography.fontSize.screenTitle,
     lineHeight: roofiTypography.lineHeight.screenTitle,
     textTransform: 'uppercase',
@@ -286,9 +289,9 @@ const styles = StyleSheet.create({
     borderRadius: roofiRadii.pill,
   },
   dekadRangeText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   bareCountPill: {
     paddingHorizontal: 10,
@@ -296,9 +299,9 @@ const styles = StyleSheet.create({
     borderRadius: roofiRadii.pill,
   },
   bareCountText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   stripContent: {
     gap: 6,
@@ -321,7 +324,18 @@ const styles = StyleSheet.create({
     borderRadius: roofiRadii.pill,
   },
   dayNumber: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
+    fontWeight: '500',
+    fontSize: 13,
+  },
+  regularText: {
+    fontFamily: roofiTypography.fontFamily.body,
+    fontWeight: '400',
+    fontSize: 12,
+  },
+  mediumText: {
+    fontFamily: roofiTypography.fontFamily.body,
+    fontWeight: '500',
     fontSize: 13,
   },
   dekadDot: {

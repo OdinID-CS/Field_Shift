@@ -471,15 +471,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   workspaceInitialText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   workspacePillLabel: {
     flexShrink: 1,
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   kpiGrid: {
     gap: 12,
@@ -537,9 +537,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   scaleLauncherBtnText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   pressed: { opacity: 0.75 },
 });

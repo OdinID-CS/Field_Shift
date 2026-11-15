@@ -4,7 +4,12 @@ import MapView, { Marker, Polygon } from 'react-native-maps';
 import { PlannerIcon } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import type { PilotCellSummary } from '@/constants/pilot-data';
-import { CardShadow, roofiRadii, roofiSpacing } from '@/constants/theme';
+import {
+  CardShadow,
+  roofiRadii,
+  roofiSpacing,
+  roofiTypography,
+} from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export interface AshantiMapPreviewProps {
@@ -97,9 +102,22 @@ export function AshantiMapPreview({
             ]}>
             <PlannerIcon name="pin" size={14} color={theme.primary} />
           </View>
-          <ThemedText type="sectionTitle">Ashanti 5×5 km Grid Map</ThemedText>
+          <ThemedText
+            type="sectionTitle"
+            style={{
+              fontFamily: roofiTypography.fontFamily.body,
+              fontWeight: '500',
+            }}>
+            Ashanti 5×5 km Grid Map
+          </ThemedText>
         </View>
-        <ThemedText type="code" themeColor="mutedText">
+        <ThemedText
+          type="small"
+          themeColor="mutedText"
+          style={{
+            fontFamily: roofiTypography.fontFamily.body,
+            fontWeight: '400',
+          }}>
           {activeCell.centreLat.toFixed(3)}°N,{' '}
           {Math.abs(activeCell.centreLon).toFixed(3)}°W
         </ThemedText>

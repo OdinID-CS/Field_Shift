@@ -408,9 +408,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   resetPillText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   scrollContent: {
     width: '100%',
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   parcelBigValue: {
-    fontFamily: roofiTypography.fontFamily.display,
+    fontFamily: roofiTypography.fontFamily.displayMedium,
     fontSize: 28,
     lineHeight: 32,
   },
@@ -453,9 +453,9 @@ const styles = StyleSheet.create({
     borderRadius: roofiRadii.pill,
   },
   kmBadgeText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   stepperGroup: {
     flexDirection: 'row',
@@ -479,9 +479,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   presetChipText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   metricsStrip: {
     flexDirection: 'row',
@@ -501,9 +501,9 @@ const styles = StyleSheet.create({
     height: 26,
   },
   metricValue: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   metricLabel: {
     fontFamily: roofiTypography.fontFamily.body,
@@ -541,9 +541,9 @@ const styles = StyleSheet.create({
     borderRadius: roofiRadii.pill,
   },
   resChipText: {
-    fontFamily: roofiTypography.fontFamily.bodyBold,
+    fontFamily: roofiTypography.fontFamily.body,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   pixelAreaText: {
     fontFamily: roofiTypography.fontFamily.body,

@@ -170,7 +170,7 @@ export function RoofiBottomTabBar({
             numberOfLines={1}
             style={{
               color: roofiNavigation.foreground,
-              fontFamily: roofiTypography.fontFamily.bodyBold,
+              fontFamily: roofiTypography.fontFamily.body,
               fontSize: 14,
               letterSpacing: -0.2,
             }}>
@@ -321,9 +321,9 @@ export function RoofiBottomTabBar({
             <Text
               style={{
                 color: '#FFFFFF',
-                fontFamily: roofiTypography.fontFamily.bodyBold,
+                fontFamily: roofiTypography.fontFamily.body,
                 fontSize: 11,
-                fontWeight: '700',
+                fontWeight: '500',
               }}>
               {queuedLogsCount > 99 ? '99+' : queuedLogsCount}
             </Text>

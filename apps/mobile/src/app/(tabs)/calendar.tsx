@@ -1,9 +1,19 @@
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  Animated,
+  Easing,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DekadHeatmapMatrix } from '@/components/dekad-heatmap-matrix';
+import { PlannerIcon } from '@/components/icons';
 import {
   type ChartPoint,
   HeroStatusCard,
@@ -26,12 +36,13 @@ import { usePilotState } from '@/hooks/use-pilot-state';
 import { useTheme } from '@/hooks/use-theme';
 import { toast } from '@/lib/toast';
 
-type CalendarFilter = 'all' | 'bare' | 'cloud';
+type CalendarFilter = 'all' | 'bare' | 'cloud' | 'windows';
 
 const FILTER_OPTIONS = [
   { id: 'all', label: 'All Windows' },
   { id: 'bare', label: 'Bare Risk' },
   { id: 'cloud', label: 'Cloud QA' },
+  { id: 'windows', label: 'Dekad Windows' },
 ] as const;
 
 const QA_TIER_LABELS = {
@@ -43,10 +54,152 @@ const QA_TIER_LABELS = {
 const TEMP_BY_MONTH = [33, 35, 34, 31, 29, 27, 27, 28, 29, 29, 31, 32];
 const ET0_BY_MONTH = [138, 140, 144, 130, 122, 112, 114, 118, 118, 120, 126, 132];
 
+type ChartSectionKey = 'rain' | 'moisture' | 'temperature';
+
+function CollapsibleChartSection({
+  title,
+  metricValue,
+  summary,
+  accentColor,
+  span = 'full',
+  isOpen,
+  onToggle,
+  children,
+}: {
+  title: string;
+  metricValue: string;
+  summary: string;
+  accentColor: string;
+  span?: 'half' | 'full';
+  isOpen: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  const theme = useTheme();
+  const anim = useRef(new Animated.Value(isOpen ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: isOpen ? 1 : 0,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: Platform.OS !== 'web',
+    }).start();
+  }, [anim, isOpen]);
+
+  const chevronRotate = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '90deg'],
+  });
+  const bodyTranslateY = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [10, 0],
+  });
+  const bodyScale = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.98, 1],
+  });
+
+  const isFullWidth = isOpen || span === 'full';
+
+  return (
+    <View
+      style={[
+        styles.windowCard,
+        styles.bentoTile,
+        CardShadow,
+        {
+          flexBasis: isFullWidth ? '100%' : '48%',
+          backgroundColor: theme.surface,
+          borderColor: isOpen ? accentColor : theme.border,
+          borderWidth: isOpen ? 1.5 : 1,
+        },
+      ]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: isOpen }}
+        onPress={onToggle}
+        style={({ pressed }) => [
+          styles.chartAccordionHeader,
+          { opacity: pressed ? 0.8 : 1 },
+        ]}>
+        <View style={styles.bentoHeaderTop}>
+          <View style={styles.chartTitleRow}>
+            <View style={[styles.chartDot, { backgroundColor: accentColor }]} />
+            <ThemedText
+              type="small"
+              themeColor="mutedText"
+              style={styles.bentoMetaText}
+              numberOfLines={1}>
+              {metricValue}
+            </ThemedText>
+          </View>
+          <View
+            style={[
+              styles.chartTogglePill,
+              { backgroundColor: theme.surfaceSubtle },
+            ]}>
+            <ThemedText
+              type="small"
+              themeColor="secondary"
+              style={styles.bentoMetaText}>
+              {isOpen ? 'HIDE' : 'VIEW'}
+            </ThemedText>
+            <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
+              <PlannerIcon name="chevron" size={14} color={theme.secondary} />
+            </Animated.View>
+          </View>
+        </View>
+
+        <View style={styles.bentoTitleBlock}>
+          <ThemedText
+            type="default"
+            style={styles.bentoTitleText}
+            numberOfLines={2}>
+            {title}
+          </ThemedText>
+          <ThemedText
+            type="small"
+            themeColor="mutedText"
+            style={styles.bentoSummaryText}
+            numberOfLines={1}>
+            {summary}
+          </ThemedText>
+        </View>
+      </Pressable>
+
+      {isOpen && (
+        <Animated.View
+          style={[
+            styles.chartBodyWrap,
+            {
+              opacity: anim,
+              transform: [{ translateY: bodyTranslateY }, { scale: bodyScale }],
+            },
+          ]}>
+          {children}
+        </Animated.View>
+      )}
+    </View>
+  );
+}
+
 export default function CalendarScreen() {
   const theme = useTheme();
   const { cells, selectedCell, selectCell } = usePilotState();
   const [filter, setFilter] = useState<CalendarFilter>('all');
+  const [openCharts, setOpenCharts] = useState<Record<ChartSectionKey, boolean>>({
+    rain: false,
+    moisture: false,
+    temperature: false,
+  });
+
+  const toggleChart = (key: ChartSectionKey) => {
+    if (Platform.OS !== 'web') {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }
+    setOpenCharts((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const cycleCell = () => {
     const idx = cells.findIndex((c) => c.cellId === selectedCell.cellId);
@@ -136,7 +289,17 @@ export default function CalendarScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        <HeroStatusCard
+        <SegmentedPillBar
+          options={FILTER_OPTIONS}
+          selectedId={filter}
+          onSelect={handleFilterSelect}
+        />
+
+        {filter !== 'windows' ? (
+          <>
+            <DekadHeatmapMatrix windows={filteredWindows} />
+
+            <HeroStatusCard
           value="67"
           unit="%"
           deltaText={
@@ -151,115 +314,138 @@ export default function CalendarScreen() {
           metaRight="36-DEKAD BASELINE"
         />
 
-        <DekadHeatmapMatrix windows={SEASONAL_VULNERABILITY_CALENDAR} />
-
-        <View
-          style={[
-            styles.windowCard,
-            CardShadow,
-            { backgroundColor: theme.surface, borderColor: theme.border },
-          ]}>
-          <View style={styles.windowTopRow}>
-            <ThemedText type="sectionTitle">Rainfall vs. ET₀ Demand</ThemedText>
-            <ThemedText type="code" themeColor="mutedText">
-              MM / MONTH
-            </ThemedText>
-          </View>
-          <View style={styles.statChipsRow}>
-            <View
-              style={[
-                styles.miniChip,
-                { backgroundColor: theme.sage.surface },
-              ]}>
-              <ThemedText type="code" style={{ color: theme.sage.ink }}>
-                Rain (Wet)
-              </ThemedText>
-            </View>
-            <View
-              style={[
-                styles.miniChip,
-                { backgroundColor: theme.personal.surface },
-              ]}>
-              <ThemedText type="code" style={{ color: theme.personal.ink }}>
-                Rain (Bare Dip)
-              </ThemedText>
-            </View>
-            <View
-              style={[
-                styles.miniChip,
-                { backgroundColor: theme.pair.surface },
-              ]}>
-              <ThemedText type="code" style={{ color: theme.pair.ink }}>
-                ET₀ Demand
-              </ThemedText>
-            </View>
-          </View>
-          <BarChart
-            data={rainEt0BarData}
-            barWidth={8}
-            spacing={12}
-            roundedTop
-            hideRules
-            noOfSections={4}
-            maxValue={240}
-            height={145}
-            xAxisThickness={0}
-            yAxisThickness={0}
-            yAxisTextStyle={{
-              color: theme.mutedText,
-              fontFamily: roofiTypography.fontFamily.body,
-              fontSize: 10,
-            }}
-            xAxisLabelTextStyle={{
-              color: theme.secondary,
-              fontFamily: roofiTypography.fontFamily.bodyBold,
-              fontSize: 10,
-            }}
-          />
-        </View>
-
-        <SegmentedPillBar
-          options={FILTER_OPTIONS}
-          selectedId={filter}
-          onSelect={handleFilterSelect}
-        />
-
-        <InteractiveAreaChartCard
-          title="Vegetation Cover & Moisture"
-          points={moistureChartPoints}
-          unit="%"
-          colorTone="green"
-          statChips={['Avg 46%', 'Min 22%', 'Max 72%']}
-          yMin={0}
-          yMax={100}
-          yTickCount={4}
-        />
-
-        <InteractiveAreaChartCard
-          title="Air & Surface Temperature"
-          points={tempChartPoints}
-          unit="°C"
-          colorTone="amber"
-          statChips={['Avg 30°C', 'Min 27°C', 'Max 35°C']}
-          yMin={20}
-          yMax={40}
-          yTickCount={4}
-        />
-
         <View style={styles.sectionRow}>
-          <Heading title="Dekad Windows" />
+          <Heading title="Climate & Canopy Charts" />
           <View
             style={[
               styles.countBadge,
               { backgroundColor: theme.surfaceSubtle },
             ]}>
             <ThemedText type="code" themeColor="secondary">
-              {filteredWindows.length} · NDVI &lt; 0.28 BARE
+              TAP TO EXPAND
             </ThemedText>
           </View>
         </View>
 
-        {filteredWindows.map((win) => (
+        <View style={styles.bentoGrid}>
+          <CollapsibleChartSection
+            title="Vegetation Cover & Moisture"
+            metricValue="46% AVG"
+            summary="MIN 22% · MAX 72%"
+            accentColor="#1FB26B"
+            span="half"
+            isOpen={openCharts.moisture}
+            onToggle={() => toggleChart('moisture')}>
+            <InteractiveAreaChartCard
+              title="Vegetation Cover & Moisture"
+              points={moistureChartPoints}
+              unit="%"
+              colorTone="green"
+              statChips={['Avg 46%', 'Min 22%', 'Max 72%']}
+              yMin={0}
+              yMax={100}
+              yTickCount={4}
+            />
+          </CollapsibleChartSection>
+
+          <CollapsibleChartSection
+            title="Air & Surface Temperature"
+            metricValue="30°C AVG"
+            summary="MIN 27°C · MAX 35°C"
+            accentColor="#F9D601"
+            span="half"
+            isOpen={openCharts.temperature}
+            onToggle={() => toggleChart('temperature')}>
+            <InteractiveAreaChartCard
+              title="Air & Surface Temperature"
+              points={tempChartPoints}
+              unit="°C"
+              colorTone="amber"
+              statChips={['Avg 30°C', 'Min 27°C', 'Max 35°C']}
+              yMin={20}
+              yMax={40}
+              yTickCount={4}
+            />
+          </CollapsibleChartSection>
+
+          <CollapsibleChartSection
+            title="Rainfall vs. ET₀ Demand"
+            metricValue="1,426 MM/YR"
+            summary="MM / MONTH · WET VS BARE DIP"
+            accentColor={theme.sage.ink}
+            span="full"
+            isOpen={openCharts.rain}
+            onToggle={() => toggleChart('rain')}>
+            <View style={styles.statChipsRow}>
+              <View
+                style={[
+                  styles.miniChip,
+                  { backgroundColor: theme.sage.surface },
+                ]}>
+                <ThemedText type="code" style={{ color: theme.sage.ink }}>
+                  Rain (Wet)
+                </ThemedText>
+              </View>
+              <View
+                style={[
+                  styles.miniChip,
+                  { backgroundColor: theme.personal.surface },
+                ]}>
+                <ThemedText type="code" style={{ color: theme.personal.ink }}>
+                  Rain (Bare Dip)
+                </ThemedText>
+              </View>
+              <View
+                style={[
+                  styles.miniChip,
+                  { backgroundColor: theme.pair.surface },
+                ]}>
+                <ThemedText type="code" style={{ color: theme.pair.ink }}>
+                  ET₀ Demand
+                </ThemedText>
+              </View>
+            </View>
+            <BarChart
+              data={rainEt0BarData}
+              barWidth={8}
+              spacing={12}
+              roundedTop
+              hideRules
+              noOfSections={4}
+              maxValue={240}
+              height={145}
+              xAxisThickness={0}
+              yAxisThickness={0}
+              yAxisTextStyle={{
+                color: theme.mutedText,
+                fontFamily: roofiTypography.fontFamily.body,
+                fontSize: 10,
+              }}
+              xAxisLabelTextStyle={{
+                color: theme.secondary,
+                fontFamily: roofiTypography.fontFamily.body,
+                fontSize: 10,
+              }}
+            />
+          </CollapsibleChartSection>
+        </View>
+          </>
+        ) : (
+          <>
+            <View style={styles.sectionRow}>
+              <Heading title="Dekad Windows" />
+              <View
+                style={[
+                  styles.countBadge,
+                  { backgroundColor: theme.surfaceSubtle },
+                ]}>
+                <ThemedText type="code" themeColor="secondary">
+                  {filteredWindows.length} · NDVI &lt; 0.28 BARE
+                </ThemedText>
+              </View>
+            </View>
+
+            {filteredWindows.map((win) => (
           <View
             key={win.id}
             style={[
@@ -346,6 +532,8 @@ export default function CalendarScreen() {
             </ThemedText>
           </View>
         ))}
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -404,5 +592,65 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: roofiRadii.pill,
+  },
+  bentoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  bentoTile: {
+    flexGrow: 1,
+    minWidth: 150,
+  },
+  chartAccordionHeader: {
+    gap: 10,
+  },
+  bentoHeaderTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  bentoTitleBlock: {
+    gap: 3,
+  },
+  bentoTitleText: {
+    fontFamily: roofiTypography.fontFamily.body,
+    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 21,
+  },
+  bentoMetaText: {
+    fontFamily: roofiTypography.fontFamily.body,
+    fontWeight: '400',
+    fontSize: 11,
+    letterSpacing: 0.4,
+  },
+  bentoSummaryText: {
+    fontFamily: roofiTypography.fontFamily.body,
+    fontWeight: '400',
+    fontSize: 12,
+  },
+  chartTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  chartDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  chartTogglePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: roofiRadii.pill,
+  },
+  chartBodyWrap: {
+    paddingTop: 6,
+    gap: 10,
   },
 });
