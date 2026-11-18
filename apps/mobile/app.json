@@ -16,6 +16,11 @@
     },
     "android": {
       "package": "com.kaliblip.scalarfield",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDummyKeyForOfflineGracefulFallback"
+        }
+      },
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -37,7 +42,8 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

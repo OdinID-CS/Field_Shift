@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import {
   LayoutChangeEvent,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -221,11 +222,17 @@ export function TopBarHeader({
                     size={20}
                     color={theme.onPrimary}
                   />
-                ) : (
+                ) : Platform.OS === 'ios' ? (
                   <SymbolView
                     name={action.icon}
                     size={18}
                     tintColor={theme.foreground}
+                  />
+                ) : (
+                  <PlannerIcon
+                    name="tasks"
+                    size={18}
+                    color={theme.foreground}
                   />
                 )}
                 {action.badgeDot && (
@@ -340,7 +347,25 @@ export function KpiMetricCard({
           styles.kpiIconBox,
           { backgroundColor: theme.personal.surface },
         ]}>
-        <SymbolView name={icon} size={18} tintColor={theme.primary} />
+        {Platform.OS === 'ios' ? (
+          <SymbolView name={icon} size={18} tintColor={theme.primary} />
+        ) : (
+          <PlannerIcon
+            name={
+              typeof icon === 'object' && icon !== null
+                ? icon.android === 'water_drop'
+                  ? 'water'
+                  : icon.android === 'eco'
+                    ? 'document'
+                    : icon.android === 'thermostat'
+                      ? 'zap'
+                      : 'water'
+                : 'water'
+            }
+            size={18}
+            color={theme.primary}
+          />
+        )}
       </View>
 
       <View style={styles.kpiBody}>
@@ -853,11 +878,19 @@ export function SmartInsightCard({
               : theme.personal.surface,
           },
         ]}>
-        <SymbolView
-          name={icon}
-          size={19}
-          tintColor={isAmber ? theme.gold.ink : theme.primary}
-        />
+        {Platform.OS === 'ios' ? (
+          <SymbolView
+            name={icon}
+            size={19}
+            tintColor={isAmber ? theme.gold.ink : theme.primary}
+          />
+        ) : (
+          <PlannerIcon
+            name="shield"
+            size={19}
+            color={isAmber ? theme.gold.ink : theme.primary}
+          />
+        )}
       </View>
 
       <View style={styles.insightContent}>

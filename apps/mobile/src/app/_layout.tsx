@@ -9,7 +9,6 @@ import { Toaster } from 'sileo-native';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { PilotStateProvider } from '@/hooks/use-pilot-state';
-import LoginScreen from '@/app/login';
 
 void SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -20,31 +19,33 @@ function AuthenticatedShell() {
     return null;
   }
 
-  if (!session) {
-    return <LoginScreen />;
-  }
-
   return (
     <>
       <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="calendar"
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="compare"
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="passport"
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="scale-honesty"
-          options={{ animation: 'slide_from_right' }}
-        />
+        {!session ? (
+          <Stack.Screen name="login" />
+        ) : (
+          <>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="calendar"
+              options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="compare"
+              options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="passport"
+              options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="scale-honesty"
+              options={{ animation: 'slide_from_right' }}
+            />
+          </>
+        )}
       </Stack>
       <Toaster position="top-center" theme="system" />
     </>
